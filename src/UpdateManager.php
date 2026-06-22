@@ -10,7 +10,7 @@ class UpdateManager {
 
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
-        $this->updatesDir = dirname(__DIR__) . '/updates';
+        $this->updatesDir = dirname(__DIR__) . '/public/updates';
         if (!is_dir($this->updatesDir)) {
             mkdir($this->updatesDir, 0755, true);
         }

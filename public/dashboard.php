@@ -321,6 +321,21 @@
                         <button type="submit" class="btn btn-success">Publish Update</button>
                     </form>
 
+                    <!-- Upload Progress UI -->
+                    <div id="uploadProgressContainer" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                            <span id="uploadStatusText" style="color: var(--text-secondary);">Uploading...</span>
+                            <span id="uploadProgressPercent" style="font-weight: 600; color: var(--accent);">0%</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 0.5rem;">
+                            <div id="uploadProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.1s ease;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary);">
+                            <span id="uploadSpeedText">0 KB/s</span>
+                            <span id="uploadBytesText">0 / 0 MB</span>
+                        </div>
+                    </div>
+
                     <div style="overflow-x: auto; max-height: 300px; border: 1px solid var(--border-glass); border-radius: 8px;">
                         <table>
                             <thead>
@@ -420,7 +435,7 @@
 
                 tr.innerHTML = `
                     <td style="font-weight: 600; display: flex; align-items: center;">${item.version} ${statusBadge}</td>
-                    <td><a href="/api/updates/download/${item.filename}" style="color: var(--accent); text-decoration: none;">${item.filename}</a></td>
+                    <td><a href="/updates/${item.filename}" style="color: var(--accent); text-decoration: none;">${item.filename}</a></td>
                     <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         ${item.checksum}
                     </td>
@@ -522,30 +537,89 @@
             if (res.ok) fetchLicenses();
         }
 
-        async function publishUpdate(e) {
+        function publishUpdate(e) {
             e.preventDefault();
             const version = document.getElementById('updateVersion').value;
             const fileInput = document.getElementById('updateFile');
             const file = fileInput.files[0];
 
+            if (!file) return;
+
             const formData = new FormData();
             formData.append('version', version);
             formData.append('file', file);
 
-            const res = await fetch('/api/admin/update/publish', {
-                method: 'POST',
-                body: formData
-            });
+            const container = document.getElementById('uploadProgressContainer');
+            const bar = document.getElementById('uploadProgressBar');
+            const percentText = document.getElementById('uploadProgressPercent');
+            const statusText = document.getElementById('uploadStatusText');
+            const speedText = document.getElementById('uploadSpeedText');
+            const bytesText = document.getElementById('uploadBytesText');
 
-            if (res.ok) {
-                alert('Update published successfully!');
-                document.getElementById('updateVersion').value = '';
-                fileInput.value = '';
-                fetchUpdates();
-            } else {
-                const err = await res.json();
-                alert('Publish failed: ' + err.error);
-            }
+            // Reset UI and show container
+            container.style.display = 'block';
+            bar.style.width = '0%';
+            percentText.innerText = '0%';
+            statusText.innerText = 'Uploading...';
+            speedText.innerText = 'Calculating speed...';
+            bytesText.innerText = `0.00 / ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+
+            const startTime = Date.now();
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/admin/update/publish', true);
+
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    bar.style.width = percentComplete + '%';
+                    percentText.innerText = Math.round(percentComplete) + '%';
+
+                    const elapsedSeconds = (Date.now() - startTime) / 1000;
+                    const loadedMB = (event.loaded / (1024 * 1024)).toFixed(2);
+                    const totalMB = (event.total / (1024 * 1024)).toFixed(2);
+                    bytesText.innerText = `${loadedMB} / ${totalMB} MB`;
+
+                    if (elapsedSeconds > 0) {
+                        const speedBps = event.loaded / elapsedSeconds;
+                        let speedStr = '';
+                        if (speedBps > 1024 * 1024) {
+                            speedStr = (speedBps / (1024 * 1024)).toFixed(2) + ' MB/s';
+                        } else {
+                            speedStr = (speedBps / 1024).toFixed(1) + ' KB/s';
+                        }
+                        speedText.innerText = speedStr;
+                    }
+                }
+            };
+
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    statusText.innerText = 'Processing server-side update...';
+                    setTimeout(() => {
+                        alert('Update published successfully!');
+                        container.style.display = 'none';
+                        document.getElementById('updateVersion').value = '';
+                        fileInput.value = '';
+                        fetchUpdates();
+                    }, 500);
+                } else {
+                    let errMsg = 'Unknown error';
+                    try {
+                        const resp = JSON.parse(xhr.responseText);
+                        errMsg = resp.error || errMsg;
+                    } catch(e) {}
+                    alert('Publish failed: ' + errMsg);
+                    statusText.innerText = 'Upload failed.';
+                }
+            };
+
+            xhr.onerror = function() {
+                alert('Upload failed due to a network connection error.');
+                statusText.innerText = 'Network error.';
+            };
+
+            xhr.send(formData);
         }
 
         async function handleLogout() {

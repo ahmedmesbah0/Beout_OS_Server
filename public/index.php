@@ -60,7 +60,7 @@ try {
         }
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
         $host = $_SERVER['HTTP_HOST'];
-        $downloadUrl = "{$protocol}://{$host}/api/updates/download/" . urlencode($latest['filename']);
+        $downloadUrl = "{$protocol}://{$host}/updates/" . urlencode($latest['filename']);
         sendJson([
             'version' => $latest['version'],
             'url' => $downloadUrl,
@@ -71,7 +71,7 @@ try {
     // 3. Download release package binary
     if (preg_match('#^/api/updates/download/([^/]+)$#', $requestUri, $matches)) {
         $filename = urldecode($matches[1]);
-        $filePath = dirname(__DIR__) . '/updates/' . $filename;
+        $filePath = dirname(__DIR__) . '/public/updates/' . $filename;
         if (!file_exists($filePath) || strpos($filename, '..') !== false) {
             sendJson(['error' => 'File not found'], 404);
         }
