@@ -123,7 +123,6 @@
         },
       }
     </script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
 </head>
@@ -146,7 +145,7 @@
 <label class="block font-sans text-label-caps text-on-surface-variant mb-sm uppercase" for="email">Operator Identity</label>
 <div class="relative">
 <span class="absolute inset-y-0 left-0 flex items-center pl-md">
-<span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+<svg class="w-5 h-5 text-on-surface-variant shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
 </span>
 <input class="block w-full bg-surface border border-outline-variant rounded-lg pl-[48px] pr-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" id="email" name="email" placeholder="admin@beout.os" required="" type="email" value="admin@beout.os">
 </div>
@@ -156,7 +155,7 @@
 <label class="block font-sans text-label-caps text-on-surface-variant mb-sm uppercase" for="password">Access Key</label>
 <div class="relative">
 <span class="absolute inset-y-0 left-0 flex items-center pl-md">
-<span class="material-symbols-outlined text-on-surface-variant text-[20px]">key</span>
+<svg class="w-5 h-5 text-on-surface-variant shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-1.5 6l-1.5 1.5-1.5-1.5L11 16.5 9.5 15l-1.5 1.5H5v-3l6.5-6.5A4 4 0 1118 8a4 4 0 01-3.5 7z" /></svg>
 </span>
 <input class="block w-full bg-surface border border-outline-variant rounded-lg pl-[48px] pr-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" id="password" name="password" placeholder="••••••••••••" required="" type="password">
 </div>
@@ -164,7 +163,7 @@
 <!-- Submit Button -->
 <button class="w-full flex justify-center items-center gap-sm bg-[#6366F1] text-white py-[14px] rounded-lg font-sans text-body-md font-bold uppercase tracking-wider hover:bg-[#5558E3] active:scale-[0.98] transition-all shadow-sm" type="submit">
 <span>Authenticate</span>
-<span class="material-symbols-outlined text-[18px]">login</span>
+<svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
 </button>
 </form>
 <!-- Telemetry Footer -->

@@ -48,7 +48,6 @@ if ($latestPublishedAt) {
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Beout_OS Main Server - Dashboard</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <script id="tailwind-config">
@@ -122,7 +121,6 @@ if ($latestPublishedAt) {
     </script>
 <style>
         body { background-color: #FAFAFA; color: #111827; font-family: 'DM Sans', sans-serif; margin: 0; padding: 0; }
-        .material-symbols-outlined { font-family: 'Material Symbols Outlined'; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #FAFAFA; }
         ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
@@ -151,31 +149,31 @@ if ($latestPublishedAt) {
 <div class="flex flex-col gap-1 w-full flex-grow px-2">
 <!-- Tab Anchors -->
 <button id="nav-dashboard" onclick="switchTab('dashboard')" class="nav-btn bg-primary-container bg-opacity-30 text-primary font-bold px-4 py-3 rounded-lg flex items-center gap-3 w-full font-body-md text-body-md cursor-pointer transition-colors">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
 <span>Dashboard</span>
 </button>
 <button id="nav-licenses" onclick="switchTab('licenses')" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer">
-<span class="material-symbols-outlined">vpn_key</span>
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-1.5 6l-1.5 1.5-1.5-1.5L11 16.5 9.5 15l-1.5 1.5H5v-3l6.5-6.5A4 4 0 1118 8a4 4 0 01-3.5 7z" /></svg>
 <span>License Keys</span>
 </button>
 <button id="nav-import" onclick="switchTab('import')" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer">
-<span class="material-symbols-outlined">key_visualizer</span>
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
 <span>Import Keys</span>
 </button>
 <button id="nav-releases" onclick="switchTab('releases')" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer">
-<span class="material-symbols-outlined">update</span>
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" /></svg>
 <span>Releases &amp; Updates</span>
 </button>
 <button id="nav-rollback" onclick="switchTab('rollback')" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer">
-<span class="material-symbols-outlined">history</span>
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 <span>Rollback Manager</span>
 </button>
 <button id="nav-audit" onclick="switchTab('audit')" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer">
-<span class="material-symbols-outlined">receipt_long</span>
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
 <span>Audit Logs</span>
 </button>
 <button id="nav-settings" onclick="switchTab('settings')" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer mt-auto">
-<span class="material-symbols-outlined">settings</span>
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
 <span>Settings</span>
 </button>
 </div>
@@ -205,7 +203,7 @@ if ($latestPublishedAt) {
 <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3">
 <div class="flex justify-between items-start">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-bold">Total Active Licenses</span>
-<span class="material-symbols-outlined text-secondary">check_circle</span>
+<svg class="w-6 h-6 text-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 </div>
 <div class="font-headline-lg text-headline-lg text-on-surface flex items-baseline gap-2">
                             <span id="stat-active"><?= number_format($activeCount) ?></span>
@@ -219,7 +217,7 @@ if ($latestPublishedAt) {
 <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3">
 <div class="flex justify-between items-start">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-bold">Pending Keys</span>
-<span class="material-symbols-outlined text-outline">pending</span>
+<svg class="w-6 h-6 text-outline shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 </div>
 <div class="font-headline-lg text-headline-lg text-on-surface flex items-baseline gap-2">
                             <span id="stat-pending"><?= number_format($pendingCount) ?></span>
@@ -233,7 +231,7 @@ if ($latestPublishedAt) {
 <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3">
 <div class="flex justify-between items-start">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-bold">Revoked Licenses</span>
-<span class="material-symbols-outlined text-error">cancel</span>
+<svg class="w-6 h-6 text-error shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 </div>
 <div class="font-headline-lg text-headline-lg text-on-surface flex items-baseline gap-2">
                             <span id="stat-revoked"><?= number_format($revokedCount) ?></span>
@@ -247,7 +245,7 @@ if ($latestPublishedAt) {
 <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-3">
 <div class="flex justify-between items-start">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider font-bold">Latest Release</span>
-<span class="material-symbols-outlined text-primary">new_releases</span>
+<svg class="w-6 h-6 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
 </div>
 <div class="font-headline-lg text-headline-lg text-primary font-code-md" id="stat-version">
                             <?= htmlspecialchars($latestVersion) ?>
@@ -287,7 +285,9 @@ if ($latestPublishedAt) {
 <div class="bg-surface rounded-xl border border-outline-variant shadow-sm flex flex-col h-[520px] overflow-hidden">
 <div class="p-lg border-b border-outline-variant flex justify-between items-center shrink-0 bg-surface">
 <h2 class="font-headline-md text-headline-md text-on-surface">System Activity Feed</h2>
-<button class="material-symbols-outlined text-on-surface-variant text-sm hover:text-primary p-2 rounded-lg hover:bg-surface-variant transition-colors">filter_list</button>
+<button class="text-on-surface-variant hover:text-primary p-2 rounded-lg hover:bg-surface-variant transition-colors flex items-center justify-center">
+<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+</button>
 </div>
 <div class="flex-1 overflow-y-auto p-lg flex flex-col gap-6" id="dashboardActivityFeed">
 <!-- Populated by dynamic log events -->
@@ -366,7 +366,7 @@ if ($latestPublishedAt) {
 <input type="file" id="updateFile" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" accept=".deb" required>
 </div>
 <button type="submit" class="w-full bg-secondary text-white py-3 rounded-lg font-bold uppercase tracking-wider hover:bg-opacity-90 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center gap-2">
-<span class="material-symbols-outlined text-[18px]">publish</span> Publish Update
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Publish Update
 </button>
 </form>
 
@@ -495,6 +495,14 @@ if ($latestPublishedAt) {
 let localLicenses = [];
 let localUpdates = [];
 
+// Inline SVG Icon dictionary for dynamic rendering
+const SVG_ICONS = {
+    update: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" /></svg>`,
+    computer: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
+    cancel: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+    key_visualizer: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-1.5 6l-1.5 1.5-1.5-1.5L11 16.5 9.5 15l-1.5 1.5H5v-3l6.5-6.5A4 4 0 1118 8a4 4 0 01-3.5 7z" /></svg>`
+};
+
 // Switch Navigation Tabs
 function switchTab(tabId) {
     // Hide all views
@@ -504,9 +512,6 @@ function switchTab(tabId) {
     // Remove active styles from nav buttons
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.className = "nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer";
-        // Reset material symbol fill setting if applicable
-        const icon = btn.querySelector('.material-symbols-outlined');
-        if (icon) icon.style.variationSettings = "";
     });
 
     // Show current tab view
@@ -519,8 +524,6 @@ function switchTab(tabId) {
     const targetNav = document.getElementById('nav-' + tabId);
     if (targetNav) {
         targetNav.className = "nav-btn bg-primary-container bg-opacity-30 text-primary font-bold px-4 py-3 rounded-lg flex items-center gap-3 w-full font-body-md text-body-md cursor-pointer transition-colors";
-        const icon = targetNav.querySelector('.material-symbols-outlined');
-        if (icon) icon.style.variationSettings = "'FILL' 1;";
     }
 }
 
@@ -844,8 +847,8 @@ function renderDashboardActivityFeed() {
         const item = document.createElement('div');
         item.className = "flex items-start gap-4";
         item.innerHTML = `
-            <div class="w-9 h-9 rounded-full ${ev.bg} flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined text-[18px] text-${ev.color}">${ev.icon}</span>
+            <div class="w-9 h-9 rounded-full ${ev.bg} flex items-center justify-center shrink-0 text-${ev.color}">
+                ${SVG_ICONS[ev.icon] || ''}
             </div>
             <div class="flex flex-col">
                 <span class="font-body-md text-body-md text-on-surface font-bold">${ev.title}</span>
