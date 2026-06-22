@@ -1,0 +1,26 @@
+name: Beout OS Server CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: sqlite3, openssl, pdo_sqlite, mbstring
+
+    - name: Check PHP Syntax (Linting)
+      run: |
+        echo "Linting PHP files..."
+        find . -name "*.php" -not -path "*/vendor/*" -exec php -l {} \;
