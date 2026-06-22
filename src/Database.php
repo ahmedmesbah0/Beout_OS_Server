@@ -73,12 +73,12 @@ class Database {
             $seedStmt->execute([':hash' => $defaultHash]);
         }
 
-        // Seed default admin email if not present (default: admin@beout.os)
+        // Seed default admin email if not present (default: operator@beout.ai)
         $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM settings WHERE key = 'admin_email'");
         $stmt->execute();
         $row = $stmt->fetch();
         if ($row['count'] == 0) {
-            $seedStmt = $this->pdo->prepare("INSERT INTO settings (key, value) VALUES ('admin_email', 'admin@beout.os')");
+            $seedStmt = $this->pdo->prepare("INSERT INTO settings (key, value) VALUES ('admin_email', 'operator@beout.ai')");
             $seedStmt->execute();
         }
     }

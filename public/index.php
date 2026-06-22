@@ -136,7 +136,7 @@ try {
         $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_email'");
         $stmt->execute();
         $emailRow = $stmt->fetch();
-        $adminEmail = $emailRow ? $emailRow['value'] : 'admin@beout.os';
+        $adminEmail = $emailRow ? $emailRow['value'] : 'operator@beout.ai';
         
         // Fetch password hash
         $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_password_hash'");
@@ -303,7 +303,7 @@ try {
         $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_email'");
         $stmt->execute();
         $emailRow = $stmt->fetch();
-        $adminEmail = $emailRow ? $emailRow['value'] : 'admin@beout.os';
+        $adminEmail = $emailRow ? $emailRow['value'] : 'operator@beout.ai';
         
         $publicKey = Crypto::getPublicKey();
         include dirname(__DIR__) . '/public/dashboard.php';

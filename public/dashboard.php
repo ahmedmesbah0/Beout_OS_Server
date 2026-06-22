@@ -468,7 +468,7 @@ if ($latestPublishedAt) {
 <form id="settingsPasswordForm" onsubmit="changeAdminPassword(event)" class="space-y-4">
 <div class="flex flex-col gap-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="newEmail">Operator Identity (Email)</label>
-<input type="email" id="newEmail" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="admin@beout.os" value="<?= htmlspecialchars($adminEmail) ?>" required>
+<input type="email" id="newEmail" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="operator@beout.ai" value="<?= htmlspecialchars($adminEmail) ?>" required>
 </div>
 <div class="flex flex-col gap-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="newPassword">New Password Access Key</label>
