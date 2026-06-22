@@ -4,7 +4,10 @@
  * Usage: php publish_update.php <version> <path_to_deb>
  */
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+$vendorAutoload = dirname(__DIR__) . '/vendor/autoload.php';
+if (file_exists($vendorAutoload)) {
+    require_once $vendorAutoload;
+}
 
 // Auto-register autoloader fallback if composer install wasn't run
 spl_autoload_register(function ($class) {

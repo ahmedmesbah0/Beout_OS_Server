@@ -1,4 +1,9 @@
 <?php
+// Route static files directly if they exist on disk
+if (file_exists(__DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)) && is_file(__DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH))) {
+    return false;
+}
+
 session_start();
 
 header("Access-Control-Allow-Origin: *");
