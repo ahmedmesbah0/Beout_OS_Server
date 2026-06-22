@@ -1,0 +1,14 @@
+[Unit]
+Description=Beout_OS Licensing and Update Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/Beout_OS_Server
+ExecStart=/usr/bin/php -S 0.0.0.0:8000 -t public
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
