@@ -32,6 +32,11 @@ class UpdateManager {
             throw new Exception("Invalid version or file upload error", 400);
         }
 
+        // Validate version format to prevent path traversal
+        if (!preg_match('/^[0-9a-zA-Z.-]+$/', $version)) {
+            throw new Exception("Invalid version format", 400);
+        }
+
         $filename = "beout_os-core_" . $version . ".deb";
         $targetPath = $this->updatesDir . '/' . $filename;
 

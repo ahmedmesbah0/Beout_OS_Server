@@ -30,28 +30,38 @@ class Crypto {
     }
 
     public static function signPayload($payload) {
-        $privKeyPath = self::getPrivateKeyPath();
-        
-        // Write payload to temporary file
-        $tempPayload = tempnam(sys_get_temp_dir(), 'pay');
-        file_put_contents($tempPayload, $payload);
-        $tempSig = $tempPayload . '.sig';
-
-        // Execute OpenSSL Ed25519 signature
-        $cmd = "openssl pkeyutl -sign -inkey " . escapeshellarg($privKeyPath) . " -rawin -in " . escapeshellarg($tempPayload) . " -out " . escapeshellarg($tempSig) . " 2>&1";
-        exec($cmd, $output, $returnVar);
-
-        if ($returnVar === 0 && file_exists($tempSig)) {
-            $sigBytes = file_get_contents($tempSig);
-            @unlink($tempPayload);
-            @unlink($tempSig);
+        try {
+            $privKeyPath = self::getPrivateKeyPath();
+            if (!file_exists($privKeyPath)) {
+                return null;
+            }
+            $privPem = file_get_contents($privKeyPath);
+            
+            $lines = explode("\n", trim($privPem));
+            // Filter out PEM header/footer lines and spaces
+            $b64Lines = array_filter($lines, function($line) {
+                $line = trim($line);
+                return $line !== '' && strpos($line, '---') !== 0;
+            });
+            $b64 = implode("", $b64Lines);
+            $der = base64_decode($b64);
+            if (!$der) {
+                return null;
+            }
+            
+            // Extract the 32-byte private key seed from PKCS#8 DER structure (located at the end)
+            $seed = substr($der, -32);
+            if (strlen($seed) !== 32) {
+                return null;
+            }
+            
+            $keypair = sodium_crypto_sign_seed_keypair($seed);
+            $secret = sodium_crypto_sign_secretkey($keypair);
+            $sigBytes = sodium_crypto_sign_detached($payload, $secret);
+            
             return base64_encode($sigBytes);
+        } catch (\Throwable $e) {
+            return null;
         }
-
-        @unlink($tempPayload);
-        if (file_exists($tempSig)) {
-            @unlink($tempSig);
-        }
-        return null;
     }
 }
