@@ -329,11 +329,12 @@
                                     <th>Filename</th>
                                     <th>SHA256 Checksum</th>
                                     <th>Published At</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="updatesTable">
                                 <tr>
-                                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 1.5rem;">Loading updates list...</td>
+                                    <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 1.5rem;">Loading updates list...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -397,23 +398,71 @@
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 1.5rem;">No updates published yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 1.5rem;">No updates published yet.</td></tr>';
                 return;
             }
 
-            data.forEach(item => {
+            data.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 const pubDate = new Date(item.published_at).toLocaleString();
+                
+                const isActive = (index === 0);
+                const statusBadge = isActive 
+                    ? '<span style="display: inline-block; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: rgba(52, 211, 153, 0.2); color: #34d399; margin-left: 0.5rem; font-weight: 500;">Active</span>' 
+                    : '<span style="display: inline-block; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-secondary); margin-left: 0.5rem; font-weight: 500;">Inactive</span>';
+
+                const actionButtons = isActive
+                    ? `<button class="btn btn-danger" onclick="deleteUpdate('${item.version}')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 4px;">Delete</button>`
+                    : `
+                        <button class="btn btn-success" onclick="activateUpdate('${item.version}')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 4px; margin-right: 0.5rem;">Activate</button>
+                        <button class="btn btn-danger" onclick="deleteUpdate('${item.version}')" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 4px;">Delete</button>
+                      `;
+
                 tr.innerHTML = `
-                    <td style="font-weight: 600;">${item.version}</td>
+                    <td style="font-weight: 600; display: flex; align-items: center;">${item.version} ${statusBadge}</td>
                     <td><a href="/api/updates/download/${item.filename}" style="color: var(--accent); text-decoration: none;">${item.filename}</a></td>
                     <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         ${item.checksum}
                     </td>
                     <td style="font-size: 0.8rem; color: var(--text-secondary);">${pubDate}</td>
+                    <td>
+                        <div style="display: flex; align-items: center;">
+                            ${actionButtons}
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        async function activateUpdate(version) {
+            if (!confirm(`Are you sure you want to rollback/change active update to version ${version}?`)) return;
+            const res = await fetch('/api/admin/update/activate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ version: version })
+            });
+            if (res.ok) {
+                fetchUpdates();
+            } else {
+                const err = await res.json();
+                alert('Activation failed: ' + err.error);
+            }
+        }
+
+        async function deleteUpdate(version) {
+            if (!confirm(`Are you sure you want to delete update version ${version}? This will physically delete the package file.`)) return;
+            const res = await fetch('/api/admin/update/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ version: version })
+            });
+            if (res.ok) {
+                fetchUpdates();
+            } else {
+                const err = await res.json();
+                alert('Delete failed: ' + err.error);
+            }
         }
 
         async function generateLicenses() {

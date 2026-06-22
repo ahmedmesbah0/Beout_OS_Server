@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/root/Beout_OS_Server
-ExecStart=/usr/bin/php -S 0.0.0.0:8000 -t public
+ExecStart=/usr/bin/php -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:8000 -t public
 Restart=always
 RestartSec=5
 

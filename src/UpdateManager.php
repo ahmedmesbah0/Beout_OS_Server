@@ -64,4 +64,52 @@ class UpdateManager {
 
         return $checksum;
     }
+
+    public function activateUpdate($version) {
+        $version = trim($version);
+        if (empty($version)) {
+            throw new Exception("Invalid version", 400);
+        }
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM updates WHERE version = :ver");
+        $stmt->execute([':ver' => $version]);
+        $row = $stmt->fetch();
+        if ($row['count'] == 0) {
+            throw new Exception("Update version not found", 404);
+        }
+
+        // Set published_at to current time to make it the latest update
+        $stmt = $this->db->prepare("
+            UPDATE updates 
+            SET published_at = datetime('now') 
+            WHERE version = :ver
+        ");
+        $stmt->execute([':ver' => $version]);
+        return true;
+    }
+
+    public function deleteUpdate($version) {
+        $version = trim($version);
+        if (empty($version)) {
+            throw new Exception("Invalid version", 400);
+        }
+
+        $stmt = $this->db->prepare("SELECT filename FROM updates WHERE version = :ver");
+        $stmt->execute([':ver' => $version]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            throw new Exception("Update version not found", 404);
+        }
+
+        // Delete database record
+        $stmt = $this->db->prepare("DELETE FROM updates WHERE version = :ver");
+        $stmt->execute([':ver' => $version]);
+
+        // Delete physical file
+        $filepath = $this->updatesDir . '/' . $row['filename'];
+        if (file_exists($filepath)) {
+            @unlink($filepath);
+        }
+        return true;
+    }
 }

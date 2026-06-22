@@ -228,6 +228,32 @@ try {
         }
     }
 
+    // 13.1. Admin API: Activate/Rollback Update
+    if ($requestUri === '/api/admin/update/activate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        enforceAdminAuth();
+        $data = json_decode(file_get_contents('php://input'), true);
+        $version = $data['version'] ?? null;
+        try {
+            $updateMgr->activateUpdate($version);
+            sendJson(['status' => 'success']);
+        } catch (\Exception $e) {
+            sendJson(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
+    }
+
+    // 13.2. Admin API: Delete Update
+    if ($requestUri === '/api/admin/update/delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        enforceAdminAuth();
+        $data = json_decode(file_get_contents('php://input'), true);
+        $version = $data['version'] ?? null;
+        try {
+            $updateMgr->deleteUpdate($version);
+            sendJson(['status' => 'success']);
+        } catch (\Exception $e) {
+            sendJson(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
+    }
+
     // 14. Render UI
     if ($requestUri === '/admin' || $requestUri === '/') {
         if (!isset($_SESSION['admin_auth']) || $_SESSION['admin_auth'] !== true) {
