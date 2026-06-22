@@ -27,9 +27,31 @@ class UpdateManager {
     }
 
     public function publishUpdate($version, $uploadedFile) {
-        $version = trim($version);
-        if (empty($version) || !$uploadedFile || $uploadedFile['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception("Invalid version or file upload error", 400);
+        if (empty($version)) {
+            throw new Exception("Version string is empty", 400);
+        }
+        if (!$uploadedFile) {
+            throw new Exception("No file uploaded", 400);
+        }
+        if ($uploadedFile['error'] !== UPLOAD_ERR_OK) {
+            switch ($uploadedFile['error']) {
+                case UPLOAD_ERR_INI_SIZE:
+                    $maxSize = ini_get('upload_max_filesize');
+                    $postSize = ini_get('post_max_size');
+                    throw new Exception("The file exceeds the PHP upload limit. Current limits: upload_max_filesize=$maxSize, post_max_size=$postSize.", 400);
+                case UPLOAD_ERR_FORM_SIZE:
+                    throw new Exception("The file exceeds the MAX_FILE_SIZE limit.", 400);
+                case UPLOAD_ERR_PARTIAL:
+                    throw new Exception("The file was only partially uploaded.", 400);
+                case UPLOAD_ERR_NO_FILE:
+                    throw new Exception("No file was uploaded.", 400);
+                case UPLOAD_ERR_NO_TMP_DIR:
+                    throw new Exception("PHP is missing its temporary folder.", 500);
+                case UPLOAD_ERR_CANT_WRITE:
+                    throw new Exception("Failed to write file to disk. Check disk space and server permissions.", 500);
+                default:
+                    throw new Exception("PHP file upload failed with error code: " . $uploadedFile['error'], 500);
+            }
         }
 
         // Validate version format to prevent path traversal
@@ -39,6 +61,10 @@ class UpdateManager {
 
         $filename = "beout_os-core_" . $version . ".deb";
         $targetPath = $this->updatesDir . '/' . $filename;
+
+        if (!is_writable($this->updatesDir)) {
+            throw new Exception("The updates storage directory is not writable: " . $this->updatesDir . ". Please check ownership and folder permissions.", 500);
+        }
 
         if (!move_uploaded_file($uploadedFile['tmp_name'], $targetPath)) {
             throw new Exception("Failed to save uploaded file", 500);
