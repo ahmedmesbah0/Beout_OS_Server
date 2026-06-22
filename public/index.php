@@ -127,18 +127,27 @@ try {
     // Admin Authentication Login API
     if ($requestUri === '/api/admin/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $input = getJsonInput();
+        $email = $input['email'] ?? '';
         $password = $input['password'] ?? '';
         
         $db = Database::getInstance()->getConnection();
+        
+        // Fetch email
+        $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_email'");
+        $stmt->execute();
+        $emailRow = $stmt->fetch();
+        $adminEmail = $emailRow ? $emailRow['value'] : 'admin@beout.os';
+        
+        // Fetch password hash
         $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_password_hash'");
         $stmt->execute();
-        $row = $stmt->fetch();
+        $passRow = $stmt->fetch();
         
-        if ($row && password_verify($password, $row['value'])) {
+        if ($email === $adminEmail && $passRow && password_verify($password, $passRow['value'])) {
             $_SESSION['admin_auth'] = true;
             sendJson(['status' => 'success']);
         } else {
-            sendJson(['error' => 'Invalid administrator password.'], 401);
+            sendJson(['error' => 'Invalid operator email or access key.'], 401);
         }
     }
 
@@ -149,18 +158,32 @@ try {
         sendJson(['status' => 'success']);
     }
 
-    // Admin API: Update Settings Password
+    // Admin API: Update Settings Password & Profile
     if ($requestUri === '/api/admin/settings/password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         enforceAdminAuth();
         $input = getJsonInput();
+        $newEmail = $input['new_email'] ?? '';
         $newPassword = $input['new_password'] ?? '';
-        if (strlen($newPassword) < 4) {
-            sendJson(['error' => 'Password must be at least 4 characters.'], 400);
+        
+        if (empty($newEmail) || !filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            sendJson(['error' => 'Invalid email address.'], 400);
         }
-        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("UPDATE settings SET value = ? WHERE key = 'admin_password_hash'");
-        $stmt->execute([$hash]);
+        
+        // Update Email
+        $stmt = $db->prepare("UPDATE settings SET value = ? WHERE key = 'admin_email'");
+        $stmt->execute([$newEmail]);
+        
+        // Update Password if provided
+        if (!empty($newPassword)) {
+            if (strlen($newPassword) < 4) {
+                sendJson(['error' => 'Password must be at least 4 characters.'], 400);
+            }
+            $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $db->prepare("UPDATE settings SET value = ? WHERE key = 'admin_password_hash'");
+            $stmt->execute([$hash]);
+        }
         sendJson(['status' => 'success']);
     }
 
@@ -275,6 +298,13 @@ try {
             include dirname(__DIR__) . '/public/login.php';
             exit;
         }
+        
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_email'");
+        $stmt->execute();
+        $emailRow = $stmt->fetch();
+        $adminEmail = $emailRow ? $emailRow['value'] : 'admin@beout.os';
+        
         $publicKey = Crypto::getPublicKey();
         include dirname(__DIR__) . '/public/dashboard.php';
         exit;

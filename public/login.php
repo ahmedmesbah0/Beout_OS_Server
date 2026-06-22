@@ -180,6 +180,7 @@
 <script>
 async function handleLogin(e) {
     e.preventDefault();
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const errorBox = document.getElementById('errorBox');
     errorBox.classList.add('hidden');
@@ -188,7 +189,7 @@ async function handleLogin(e) {
         const res = await fetch('/api/admin/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
+            body: JSON.stringify({ email, password })
         });
         
         const data = await res.json();

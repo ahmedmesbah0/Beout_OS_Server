@@ -459,18 +459,22 @@ if ($latestPublishedAt) {
 <!-- TAB: SETTINGS                                  -->
 <!-- ============================================== -->
 <div id="view-settings" class="tab-view hidden grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start">
-<!-- Change Password Card -->
+<!-- Change Profile Card -->
 <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-6">
 <div>
-<h2 class="font-headline-md text-headline-md text-on-surface">Administrator Password</h2>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Change the main Access Key password used to log in to this portal.</p>
+<h2 class="font-headline-md text-headline-md text-on-surface">Operator Identity & Password</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Update the administrator email identity and the access key password.</p>
 </div>
 <form id="settingsPasswordForm" onsubmit="changeAdminPassword(event)" class="space-y-4">
 <div class="flex flex-col gap-2">
-<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="newPassword">New Password Access Key</label>
-<input type="password" id="newPassword" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="••••••••••••" required>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="newEmail">Operator Identity (Email)</label>
+<input type="email" id="newEmail" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="admin@beout.os" value="<?= htmlspecialchars($adminEmail) ?>" required>
 </div>
-<button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-lg font-bold font-body-md text-body-md hover:bg-opacity-90 transition-all">Save Password</button>
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="newPassword">New Password Access Key</label>
+<input type="password" id="newPassword" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="Leave empty to keep current password">
+</div>
+<button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-lg font-bold font-body-md text-body-md hover:bg-opacity-90 transition-all">Save Profile</button>
 </form>
 </div>
 
@@ -1104,18 +1108,19 @@ function publishUpdate(e) {
     xhr.send(formData);
 }
 
-// Change Admin Access Key
+// Change Admin Access Key and Profile
 async function changeAdminPassword(e) {
     e.preventDefault();
+    const newEmail = document.getElementById('newEmail').value;
     const newPassword = document.getElementById('newPassword').value;
     try {
         const res = await fetch('/api/admin/settings/password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ new_password: newPassword })
+            body: JSON.stringify({ new_email: newEmail, new_password: newPassword })
         });
         if (res.ok) {
-            alert('Administrator Access Key updated successfully!');
+            alert('Administrator profile updated successfully!');
             document.getElementById('newPassword').value = '';
         } else {
             const data = await res.json();

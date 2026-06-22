@@ -49,7 +49,7 @@ try {
     
     // Override move_uploaded_file check by copying manually in CLI context
     $filename = "beout_os-core_" . $version . ".deb";
-    $updatesDir = dirname(__DIR__) . '/updates';
+    $updatesDir = dirname(__DIR__) . '/public/updates';
     if (!is_dir($updatesDir)) {
         mkdir($updatesDir, 0755, true);
     }
