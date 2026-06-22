@@ -41,7 +41,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$DIR
-ExecStart=$PHP_PATH -S 0.0.0.0:8000 -t public
+ExecStart=$PHP_PATH -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:8000 -t public
 Restart=always
 RestartSec=5
 
@@ -70,12 +70,12 @@ else
     echo "Configuring auto-start using crontab (@reboot)..."
     
     DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-    CRON_LINE="@reboot cd $DIR && $PHP_PATH -S 0.0.0.0:8000 -t public > /var/log/beout-server.log 2>&1 &"
+    CRON_LINE="@reboot cd $DIR && $PHP_PATH -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:8000 -t public > /var/log/beout-server.log 2>&1 &"
     
     (crontab -l 2>/dev/null | grep -Fv "$DIR" ; echo "$CRON_LINE") | crontab -
     
     # Run in background now
-    nohup $PHP_PATH -S 0.0.0.0:8000 -t public > /var/log/beout-server.log 2>&1 &
+    nohup $PHP_PATH -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:8000 -t public > /var/log/beout-server.log 2>&1 &
     
     echo "Auto-start added to crontab. Server started in background."
 fi
