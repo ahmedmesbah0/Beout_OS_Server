@@ -1,0 +1,16 @@
+# SQLite Database
+*.db
+server.db
+
+# Cryptographic Keys (Private keys must never be committed)
+keys/private_key.pem
+
+# Uploaded updates binary releases
+updates/
+
+# OS and IDE files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
