@@ -149,6 +149,21 @@ try {
         sendJson(['status' => 'success']);
     }
 
+    // Admin API: Update Settings Password
+    if ($requestUri === '/api/admin/settings/password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        enforceAdminAuth();
+        $input = getJsonInput();
+        $newPassword = $input['new_password'] ?? '';
+        if (strlen($newPassword) < 4) {
+            sendJson(['error' => 'Password must be at least 4 characters.'], 400);
+        }
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("UPDATE settings SET value = ? WHERE key = 'admin_password_hash'");
+        $stmt->execute([$hash]);
+        sendJson(['status' => 'success']);
+    }
+
     // 6. Admin API: Get Licenses List
     if ($requestUri === '/api/admin/licenses') {
         enforceAdminAuth();

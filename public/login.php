@@ -1,159 +1,208 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beout_OS Management Server Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0e17;
-            --bg-glass: rgba(16, 24, 48, 0.4);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --text-primary: #ffffff;
-            --text-secondary: #8e9bb3;
-            --accent: #5e5ce6;
-            --accent-glow: rgba(94, 92, 230, 0.35);
-            --card-radius: 16px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: var(--text-primary);
-        }
-
-        body {
-            background-color: var(--bg-primary);
-            background-image: radial-gradient(circle at 10% 20%, rgba(94, 92, 230, 0.08) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(48, 209, 88, 0.05) 0%, transparent 40%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            border-radius: var(--card-radius);
-            padding: 2.5rem;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .login-card h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-align: center;
-            background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .form-group label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .input-field {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-glass);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            font-size: 0.95rem;
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .input-field:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
-
-        .btn {
-            background: var(--accent);
-            border: none;
-            border-radius: 8px;
-            padding: 0.75rem 1.25rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px var(--accent-glow);
-        }
-
-        .error-message {
-            color: #ff453a;
-            font-size: 0.85rem;
-            text-align: center;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-card">
-        <h2>Beout_OS Portal Login</h2>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; margin-top: -0.5rem;">Access the central licensing authority</p>
-        
-        <div id="errorBox" class="error-message"></div>
-
-        <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="form-group" style="margin-bottom: 1.25rem;">
-                <label for="password">Administrator Password</label>
-                <input type="password" id="password" class="input-field" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="btn" style="width: 100%;">Sign In</button>
-        </form>
-    </div>
-
-    <script>
-        async function handleLogin(e) {
-            e.preventDefault();
-            const password = document.getElementById('password').value;
-            const errorBox = document.getElementById('errorBox');
-            errorBox.style.display = 'none';
-
-            try {
-                const res = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
-                
-                const data = await res.json();
-                if (res.ok && data.status === 'success') {
-                    window.location.reload();
-                } else {
-                    errorBox.textContent = data.error || 'Authentication failed.';
-                    errorBox.style.display = 'block';
-                }
-            } catch (err) {
-                errorBox.textContent = 'Server connection error.';
-                errorBox.style.display = 'block';
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Beout_OS Admin Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        theme: {
+          extend: {
+            "colors": {
+                "primary": "#6366F1",
+                "background": "#FAFAFA",
+                "surface": "#FFFFFF",
+                "on-surface": "#111827",
+                "on-surface-variant": "#6B7280",
+                "outline-variant": "#E5E7EB",
+                "primary-container": "#6366F1",
+                "on-primary-container": "#FFFFFF",
+                "error": "#DC2626"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "12px",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "xl": "40px",
+                    "md": "16px",
+                    "margin-safe": "24px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "xs": "4px",
+                    "sm": "8px"
+            },
+            "fontFamily": {
+                    "sans": [
+                            "DM Sans",
+                            "sans-serif"
+                    ],
+                    "display": [
+                            "General Sans",
+                            "sans-serif"
+                    ],
+                    "code-sm": [
+                            "DM Sans"
+                    ],
+                    "body-sm": [
+                            "DM Sans"
+                    ],
+                    "headline-md": [
+                            "General Sans"
+                    ],
+                    "headline-lg": [
+                            "General Sans"
+                    ],
+                    "code-md": [
+                            "DM Sans"
+                    ],
+                    "body-md": [
+                            "DM Sans"
+                    ],
+                    "label-caps": [
+                            "DM Sans"
+                    ]
+            },
+            "fontSize": {
+                    "code-sm": [
+                            "11px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "18px",
+                            {
+                                    "lineHeight": "24px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "code-md": [
+                            "13px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "11px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "700"
+                            }
+                    ]
             }
-        }
+          },
+        },
+      }
     </script>
-</body>
-</html>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@600,700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+</head>
+<body class="bg-background text-on-surface min-h-screen flex items-center justify-center p-gutter selection:bg-primary selection:text-white font-sans">
+<div class="w-full max-w-[440px]">
+<!-- Header Section -->
+<div class="text-center mb-xl">
+<h1 class="font-display text-headline-lg text-on-surface tracking-tight mb-1">BeOut</h1>
+<p class="font-display text-[12px] text-on-surface-variant uppercase tracking-[0.2em] font-semibold mb-lg">OS Admin</p>
+<p class="font-sans text-body-md text-on-surface-variant/80">Central Licensing &amp; Update Authority</p>
+</div>
+<!-- Login Card -->
+<div class="bg-surface border border-outline-variant rounded-lg p-xl shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+<!-- Error Alert Box -->
+<div id="errorBox" class="hidden bg-red-50 border border-red-200 text-error rounded-lg p-md text-body-md mb-lg font-medium text-center"></div>
+
+<form id="loginForm" onsubmit="handleLogin(event)" class="space-y-lg">
+<!-- Email Field -->
+<div>
+<label class="block font-sans text-label-caps text-on-surface-variant mb-sm uppercase" for="email">Operator Identity</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-md">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+</span>
+<input class="block w-full bg-surface border border-outline-variant rounded-lg pl-[48px] pr-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" id="email" name="email" placeholder="admin@beout.os" required="" type="email" value="admin@beout.os">
+</div>
+</div>
+<!-- Password Field -->
+<div>
+<label class="block font-sans text-label-caps text-on-surface-variant mb-sm uppercase" for="password">Access Key</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-md">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">key</span>
+</span>
+<input class="block w-full bg-surface border border-outline-variant rounded-lg pl-[48px] pr-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" id="password" name="password" placeholder="••••••••••••" required="" type="password">
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full flex justify-center items-center gap-sm bg-[#6366F1] text-white py-[14px] rounded-lg font-sans text-body-md font-bold uppercase tracking-wider hover:bg-[#5558E3] active:scale-[0.98] transition-all shadow-sm" type="submit">
+<span>Authenticate</span>
+<span class="material-symbols-outlined text-[18px]">login</span>
+</button>
+</form>
+<!-- Telemetry Footer -->
+<div class="mt-xl pt-lg border-t border-outline-variant flex justify-between items-center">
+<span class="font-sans text-code-sm text-on-surface-variant flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-primary block animate-pulse"></span>
+                    Node Connected
+                </span>
+<span class="font-sans text-code-sm text-on-surface-variant/60 font-medium">v1.0.0</span>
+</div>
+</div>
+</div>
+
+<script>
+async function handleLogin(e) {
+    e.preventDefault();
+    const password = document.getElementById('password').value;
+    const errorBox = document.getElementById('errorBox');
+    errorBox.classList.add('hidden');
+
+    try {
+        const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+        
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            window.location.reload();
+        } else {
+            errorBox.textContent = data.error || 'Authentication failed.';
+            errorBox.classList.remove('hidden');
+        }
+    } catch (err) {
+        errorBox.textContent = 'Server connection error.';
+        errorBox.classList.remove('hidden');
+    }
+}
+</script>
+</body></html>
