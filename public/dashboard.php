@@ -515,7 +515,8 @@ function switchTab(tabId) {
     });
     // Remove active styles from nav buttons
     document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.className = "nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer";
+        const isSettings = btn.id === 'nav-settings';
+        btn.className = "nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer" + (isSettings ? " mt-auto" : "");
     });
 
     // Show current tab view
@@ -527,7 +528,8 @@ function switchTab(tabId) {
     // Set active style to target button
     const targetNav = document.getElementById('nav-' + tabId);
     if (targetNav) {
-        targetNav.className = "nav-btn bg-primary-container bg-opacity-30 text-primary font-bold px-4 py-3 rounded-lg flex items-center gap-3 w-full font-body-md text-body-md cursor-pointer transition-colors";
+        const isSettings = targetNav.id === 'nav-settings';
+        targetNav.className = "nav-btn bg-primary-container bg-opacity-30 text-primary font-bold px-4 py-3 rounded-lg flex items-center gap-3 w-full font-body-md text-body-md cursor-pointer transition-colors" + (isSettings ? " mt-auto" : "");
     }
 }
 
