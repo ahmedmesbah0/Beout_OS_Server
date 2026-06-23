@@ -60,22 +60,24 @@ class LicenseManager {
             throw new Exception("License key already active on another machine", 403);
         }
 
-        // Cryptographically sign the machine_id using Ed25519 with the same format as client
+        // Cryptographically sign the machine_id using Ed25519 with SHA-512 digest (matching client's expected format)
         $keyPath = dirname(__DIR__) . '/etc/ed25519_private_key.pem';
         if (!file_exists($keyPath)) {
             throw new Exception("Ed25519 private key not found at " . $keyPath . " - Please run /bin/generate_keys.sh to create keys", 500);
         }
 
+        // Load private key
         $privateKey = openssl_pkey_get_private('file://' . $keyPath);
         if (!$privateKey) {
             throw new Exception("Failed to load Ed25519 private key from " . $keyPath, 500);
         }
 
-        // Use Ed25519 signature with SHA-512 digest (matching client's expected format)
+        // Generate the signature using OpenSSL with SHA-512 digest (matching client's EVP_DigestSign behavior)
+        // This matches the client's crypto_utils.cpp implementation which uses EVP_sha512()
         $signature = "";
         if (!openssl_sign($machineId, $signature, $privateKey, OPENSSL_ALGO_ED25519)) {
             openssl_free_key($privateKey);
-            throw new Exception("Failed to generate Ed25519 signature", 500);
+            throw new Exception("Failed to generate Ed25519 signature with SHA-512 digest", 500);
         }
         openssl_free_key($privateKey);
 
@@ -86,10 +88,10 @@ class LicenseManager {
         }
 
         // Update database status
-        $updateStmt = $this->db->prepare("
-            UPDATE licenses 
-            SET status = 'ACTIVE', machine_id = :mid, activated_at = datetime('now'), last_seen = datetime('now') 
-            WHERE license_key = :key
+        $updateStmt = $this->db->prepare("\
+        UPDATE licenses \
+        SET status = 'ACTIVE', machine_id = :mid, activated_at = datetime('now'), last_seen = datetime('now') \
+        WHERE license_key = :key \
         ");
         $updateStmt->execute([
             ':mid' => $machineId,
@@ -114,10 +116,10 @@ class LicenseManager {
         }
 
         // Update check-in details
-        $updateStmt = $this->db->prepare("
-            UPDATE licenses 
-            SET machine_ip = :ip, os_version = :ver, last_seen = datetime('now') 
-            WHERE license_key = :key
+        $updateStmt = $this->db->prepare("\
+        UPDATE licenses \
+        SET machine_ip = :ip, os_version = :ver, last_seen = datetime('now') \
+        WHERE license_key = :key \
         ");
         $updateStmt->execute([
             ':ip' => $machineIp,
@@ -150,4 +152,4 @@ class LicenseManager {
         $hex = strtoupper(bin2hex($bytes));
         return implode('-', str_split($hex, 4));
     }
-}
+} ?>

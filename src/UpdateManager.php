@@ -78,9 +78,9 @@ class UpdateManager {
         }
 
         // Save update metadata in SQLite
-        $stmt = $this->db->prepare("
-            INSERT OR REPLACE INTO updates (version, filename, checksum, published_at) 
-            VALUES (:ver, :filename, :checksum, datetime('now'))
+        $stmt = $this->db->prepare("\
+        INSERT OR REPLACE INTO updates (version, filename, checksum, published_at) \
+        VALUES (:ver, :filename, :checksum, datetime('now')) \
         ");
         $stmt->execute([
             ':ver' => $version,
@@ -105,10 +105,10 @@ class UpdateManager {
         }
 
         // Set published_at to current time to make it the latest update
-        $stmt = $this->db->prepare("
-            UPDATE updates 
-            SET published_at = datetime('now') 
-            WHERE version = :ver
+        $stmt = $this->db->prepare("\
+        UPDATE updates \
+        SET published_at = datetime('now') \
+        WHERE version = :ver \
         ");
         $stmt->execute([':ver' => $version]);
         return true;
@@ -138,4 +138,35 @@ class UpdateManager {
         }
         return true;
     }
-}
+
+    /**
+     * Get the latest update metadata in JSON format for client consumption
+     * This endpoint is called by client's check_updates.sh script
+     * Expected response:
+     * {
+     *   "version": "1.2.0",
+     *   "url": "https://update.beout.ai/updates/beout_os-core_1.2.0.deb",
+     *   "checksum": "sha256:abc123..."
+     * }
+     */
+    public function getLatestUpdateJSON() {
+        $latest = $this->getLatestUpdate();
+
+        if (!$latest) {
+            return ['version' => '', 'url' => '', 'checksum' => ''];
+        }
+
+        // Get the base URL for the server
+        $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'update.beout.ai';
+
+        // Construct the update URL
+        $updateUrl = "{$scheme}://{$host}/updates/{$latest['filename']}";
+
+        return [
+            'version' => $latest['version'],
+            'url' => $updateUrl,
+            'checksum' => $latest['checksum']
+        ];
+    }
+} ?>
