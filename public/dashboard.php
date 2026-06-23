@@ -495,6 +495,17 @@ if ($latestPublishedAt) {
 </div>
 
 <script>
+// Helper to parse SQLite UTC dates robustly across all browsers
+function parseUTCDate(dateStr) {
+    if (!dateStr) return new Date(0);
+    if (typeof dateStr === 'number') return new Date(dateStr);
+    if (dateStr.includes('Z') || dateStr.includes('UTC') || dateStr.includes('GMT')) {
+        return new Date(dateStr);
+    }
+    const isoStr = dateStr.replace(' ', 'T') + 'Z';
+    return new Date(isoStr);
+}
+
 // Cache variable for fetched raw data
 let localLicenses = [];
 let localUpdates = [];
@@ -536,7 +547,7 @@ function switchTab(tabId) {
 // Calculate dynamic status and format date
 function getVMStatus(lastSeen) {
     if (!lastSeen) return { text: 'Pending', color: 'outline', bg: 'bg-outline bg-opacity-10' };
-    const seconds = Math.floor((new Date() - new Date(lastSeen)) / 1000);
+    const seconds = Math.floor((new Date() - parseUTCDate(lastSeen)) / 1000);
     if (seconds < 300) { // Under 5 minutes
         return { text: 'Active', color: 'secondary', bg: 'bg-secondary bg-opacity-10' };
     } else if (seconds < 1800) { // Under 30 minutes
@@ -617,7 +628,7 @@ function updateStatCards() {
         document.getElementById('stat-version').innerText = latest.version;
         
         // Format time difference
-        const timeDiff = Math.floor((new Date() - new Date(latest.published_at)) / 1000);
+        const timeDiff = Math.floor((new Date() - parseUTCDate(latest.published_at)) / 1000);
         let timeStr = 'Deployed ';
         if (timeDiff < 60) timeStr += 'just now';
         else if (timeDiff < 3600) timeStr += Math.floor(timeDiff / 60) + 'm ago';
@@ -642,7 +653,7 @@ function renderDashboardVMs() {
     }
 
     // Sort by last seen date (newest first)
-    activeVMs.sort((a, b) => new Date(b.last_seen || 0) - new Date(a.last_seen || 0));
+    activeVMs.sort((a, b) => parseUTCDate(b.last_seen) - parseUTCDate(a.last_seen));
 
     // Limit to top 5
     activeVMs.slice(0, 5).forEach(item => {
@@ -669,7 +680,7 @@ function renderDashboardVMs() {
 
 // Format date into human readable "X mins ago"
 function formatTimeAgo(dateStr) {
-    const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
+    const seconds = Math.floor((new Date() - parseUTCDate(dateStr)) / 1000);
     if (seconds < 60) return 'Just now';
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return minutes + 'm ago';
@@ -696,7 +707,7 @@ function renderLicensesList() {
         if (item.status === 'ACTIVE') badgeClass = 'bg-secondary bg-opacity-10 text-secondary';
         if (item.status === 'REVOKED') badgeClass = 'bg-error bg-opacity-10 text-error';
 
-        const lastSeenStr = item.last_seen ? new Date(item.last_seen).toLocaleString() : '--';
+        const lastSeenStr = item.last_seen ? parseUTCDate(item.last_seen).toLocaleString() : '--';
 
         let actionButtons = '';
         if (item.status === 'ACTIVE') {
@@ -750,7 +761,7 @@ function renderUpdatesList() {
             <td class="px-lg py-4 font-bold font-code-md text-on-surface flex items-center gap-2">${item.version} ${statusBadge}</td>
             <td class="px-lg py-4"><a href="/api/updates/download/${item.filename}" class="text-primary hover:underline font-medium">${item.filename}</a></td>
             <td class="px-lg py-4 font-code-sm text-code-sm text-on-surface-variant max-w-[200px] truncate" title="${item.checksum}">${item.checksum}</td>
-            <td class="px-lg py-4 text-on-surface-variant">${new Date(item.published_at).toLocaleString()}</td>
+            <td class="px-lg py-4 text-on-surface-variant">${parseUTCDate(item.published_at).toLocaleString()}</td>
             <td class="px-lg py-4 text-right">
                 <div class="flex gap-2 justify-end">${actionButtons}</div>
             </td>
@@ -786,7 +797,7 @@ function renderRollbackList() {
             <td class="px-lg py-4 font-bold font-code-md text-on-surface flex items-center gap-2">${item.version} ${statusBadge}</td>
             <td class="px-lg py-4 font-medium text-on-surface">${item.filename}</td>
             <td class="px-lg py-4 font-code-sm text-code-sm text-on-surface-variant max-w-[200px] truncate" title="${item.checksum}">${item.checksum}</td>
-            <td class="px-lg py-4 text-on-surface-variant">${new Date(item.published_at).toLocaleString()}</td>
+            <td class="px-lg py-4 text-on-surface-variant">${parseUTCDate(item.published_at).toLocaleString()}</td>
             <td class="px-lg py-4 text-right">${actionButton}</td>
         `;
         tbody.appendChild(tr);
