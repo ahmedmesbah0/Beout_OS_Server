@@ -106,7 +106,9 @@ class LicenseManager {
             ':key' => $licenseKey
         ]);
 
-        return ['status' => $row['status']];
+        return [
+            'status' => $row['status']
+        ];
     }
 
     public function revokeLicense($licenseKey) {

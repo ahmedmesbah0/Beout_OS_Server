@@ -478,8 +478,57 @@ if ($latestPublishedAt) {
 </form>
 </div>
 
+<!-- Time & Timezone Configuration Card -->
+<div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Time & Timezone Settings</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Configure timezone and NTP servers for the server and client appliances.</p>
+</div>
+<form id="settingsTimeForm" onsubmit="saveTimeSettings(event)" class="space-y-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div class="flex flex-col gap-2">
+    <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="serverTimezone">Server Timezone</label>
+    <select id="serverTimezone" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-sans text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none bg-white">
+      <option value="UTC">UTC</option>
+      <option value="Europe/London">Europe/London</option>
+      <option value="Europe/Paris">Europe/Paris</option>
+      <option value="America/New_York">America/New_York</option>
+      <option value="Asia/Riyadh">Asia/Riyadh</option>
+      <option value="Asia/Dubai">Asia/Dubai</option>
+      <option value="Asia/Kuwait">Asia/Kuwait</option>
+      <option value="Africa/Cairo">Africa/Cairo</option>
+    </select>
+  </div>
+  <div class="flex flex-col gap-2">
+    <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="serverTimeServer">Server NTP Server</label>
+    <input type="text" id="serverTimeServer" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-sans text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="pool.ntp.org">
+  </div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div class="flex flex-col gap-2">
+    <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="clientTimezone">Client Timezone</label>
+    <select id="clientTimezone" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-sans text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none bg-white">
+      <option value="UTC">UTC</option>
+      <option value="Europe/London">Europe/London</option>
+      <option value="Europe/Paris">Europe/Paris</option>
+      <option value="America/New_York">America/New_York</option>
+      <option value="Asia/Riyadh">Asia/Riyadh</option>
+      <option value="Asia/Dubai">Asia/Dubai</option>
+      <option value="Asia/Kuwait">Asia/Kuwait</option>
+      <option value="Africa/Cairo">Africa/Cairo</option>
+    </select>
+  </div>
+  <div class="flex flex-col gap-2">
+    <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="clientTimeServer">Client NTP Server</label>
+    <input type="text" id="clientTimeServer" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-sans text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="pool.ntp.org">
+  </div>
+</div>
+<button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-lg font-bold font-body-md text-body-md hover:bg-opacity-90 transition-all">Save Time Settings</button>
+</form>
+</div>
+
 <!-- Verification Key Card -->
-<div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-4">
+<div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-4 lg:col-span-2">
 <div>
 <h2 class="font-headline-md text-headline-md text-on-surface">Cryptographic Verification Key</h2>
 <p class="font-body-sm text-body-sm text-on-surface-variant">This public key must be baked inside client VM appliances at <code>/opt/beout_os/etc/license_public_key.pem</code> to verify updates.</p>
@@ -1144,6 +1193,53 @@ async function changeAdminPassword(e) {
     }
 }
 
+// Fetch Time/Timezone Settings
+async function fetchTimeSettings() {
+    try {
+        const res = await fetch('/api/admin/settings');
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('serverTimezone').value = data.server_timezone || 'UTC';
+            document.getElementById('serverTimeServer').value = data.server_time_server || 'pool.ntp.org';
+            document.getElementById('clientTimezone').value = data.client_timezone || 'UTC';
+            document.getElementById('clientTimeServer').value = data.client_time_server || 'pool.ntp.org';
+        }
+    } catch (err) {
+        console.error('Error fetching system settings:', err);
+    }
+}
+
+// Save Time/Timezone Settings
+async function saveTimeSettings(e) {
+    e.preventDefault();
+    const server_timezone = document.getElementById('serverTimezone').value;
+    const server_time_server = document.getElementById('serverTimeServer').value;
+    const client_timezone = document.getElementById('clientTimezone').value;
+    const client_time_server = document.getElementById('clientTimeServer').value;
+    
+    try {
+        const res = await fetch('/api/admin/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                server_timezone,
+                server_time_server,
+                client_timezone,
+                client_time_server
+            })
+        });
+        if (res.ok) {
+            alert('System timezone and time settings updated successfully!');
+            fetchTimeSettings();
+        } else {
+            const data = await res.json();
+            alert('Failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Failed to connect to server.');
+    }
+}
+
 // Clear client cache logs
 function clearClientTelemetryCache() {
     if (confirm('Clear administrative event log telemetry cache?')) {
@@ -1166,6 +1262,7 @@ async function handleLogout() {
 function initPoll() {
     fetchLicenses();
     fetchUpdates();
+    fetchTimeSettings();
     
     // Refresh VMs and events every 10 seconds
     setInterval(() => {

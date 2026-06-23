@@ -192,6 +192,72 @@ try {
         sendJson(['status' => 'success']);
     }
 
+    // Admin API: Get System settings (Time, Timezone, email)
+    if ($requestUri === '/api/admin/settings' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        enforceAdminAuth();
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->query("SELECT key, value FROM settings");
+        $rows = $stmt->fetchAll();
+        $settings = [];
+        foreach ($rows as $row) {
+            $settings[$row['key']] = $row['value'];
+        }
+        
+        $response = [
+            'admin_email' => $settings['admin_email'] ?? 'operator@beout.ai',
+            'server_timezone' => $settings['server_timezone'] ?? 'UTC',
+            'server_time_server' => $settings['server_time_server'] ?? 'pool.ntp.org',
+            'client_timezone' => $settings['client_timezone'] ?? 'UTC',
+            'client_time_server' => $settings['client_time_server'] ?? 'pool.ntp.org'
+        ];
+        sendJson($response);
+    }
+
+    // Admin API: Save System settings
+    if ($requestUri === '/api/admin/settings' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        enforceAdminAuth();
+        $input = getJsonInput();
+        
+        $db = Database::getInstance()->getConnection();
+        
+        $allowedKeys = [
+            'server_timezone',
+            'server_time_server',
+            'client_timezone',
+            'client_time_server'
+        ];
+        
+        $stmt = $db->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
+        
+        foreach ($allowedKeys as $key) {
+            if (isset($input[$key])) {
+                $val = trim($input[$key]);
+                $stmt->execute([$key, $val]);
+                
+                // If server timezone, try to apply to server system
+                if ($key === 'server_timezone') {
+                    if (file_exists("/usr/share/zoneinfo/" . $val)) {
+                        @exec("timedatectl set-timezone " . escapeshellarg($val) . " 2>&1");
+                        @exec("ln -sf /usr/share/zoneinfo/" . escapeshellarg($val) . " /etc/localtime 2>&1");
+                    }
+                }
+                
+                // If server time server, try to apply to server system timesyncd
+                if ($key === 'server_time_server') {
+                    if (file_exists("/etc/systemd/timesyncd.conf")) {
+                        $content = @file_get_contents("/etc/systemd/timesyncd.conf");
+                        if ($content !== false) {
+                            $content = preg_replace('/^#?NTP=.*/m', 'NTP=' . $val, $content);
+                            @file_put_contents("/etc/systemd/timesyncd.conf", $content);
+                            @exec("systemctl restart systemd-timesyncd 2>&1");
+                        }
+                    }
+                }
+            }
+        }
+        sendJson(['status' => 'success']);
+    }
+
     // 6. Admin API: Get Licenses List
     if ($requestUri === '/api/admin/licenses') {
         enforceAdminAuth();
