@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
-WorkingDirectory=/root/Beout_OS_Server
-ExecStart=/usr/bin/php -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:8000 -t public
+User=mesba7
+WorkingDirectory=/home/mesba7/Documents/GitHub/Beout_OS/Beout_OS_Server
+ExecStart=/usr/bin/php -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:8080 -t public
 Restart=always
 RestartSec=5
 
