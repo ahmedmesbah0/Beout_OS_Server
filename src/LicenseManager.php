@@ -60,10 +60,29 @@ class LicenseManager {
             throw new Exception("License key already active on another machine", 403);
         }
 
-        // Cryptographically sign the machine_id
-        $activationToken = Crypto::signPayload($machineId);
+        // Cryptographically sign the machine_id using Ed25519 with the same format as client
+        $keyPath = dirname(__DIR__) . '/etc/ed25519_private_key.pem';
+        if (!file_exists($keyPath)) {
+            throw new Exception("Ed25519 private key not found at " . $keyPath . " - Please run /bin/generate_keys.sh to create keys", 500);
+        }
+
+        $privateKey = openssl_pkey_get_private('file://' . $keyPath);
+        if (!$privateKey) {
+            throw new Exception("Failed to load Ed25519 private key from " . $keyPath, 500);
+        }
+
+        // Use Ed25519 signature with SHA-512 digest (matching client's expected format)
+        $signature = "";
+        if (!openssl_sign($machineId, $signature, $privateKey, OPENSSL_ALGO_ED25519)) {
+            openssl_free_key($privateKey);
+            throw new Exception("Failed to generate Ed25519 signature", 500);
+        }
+        openssl_free_key($privateKey);
+
+        // Base64 encode the signature (matching client's expected format)
+        $activationToken = base64_encode($signature);
         if (!$activationToken) {
-            throw new Exception("Cryptographic signing failed", 500);
+            throw new Exception("Failed to base64 encode signature", 500);
         }
 
         // Update database status
