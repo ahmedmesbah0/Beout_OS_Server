@@ -481,8 +481,8 @@ if ($latestPublishedAt) {
 <!-- Time & Timezone Configuration Card -->
 <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-6">
 <div>
-<h2 class="font-headline-md text-headline-md text-on-surface">Time & Timezone Settings</h2>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Configure timezone and NTP servers for the server and client appliances.</p>
+<h2 class="font-headline-md text-headline-md text-on-surface">Server Time & Timezone</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Configure timezone and NTP servers for this main server.</p>
 </div>
 <form id="settingsTimeForm" onsubmit="saveTimeSettings(event)" class="space-y-4">
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -502,25 +502,6 @@ if ($latestPublishedAt) {
   <div class="flex flex-col gap-2">
     <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="serverTimeServer">Server NTP Server</label>
     <input type="text" id="serverTimeServer" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-sans text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="pool.ntp.org">
-  </div>
-</div>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-  <div class="flex flex-col gap-2">
-    <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="clientTimezone">Client Timezone</label>
-    <select id="clientTimezone" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-sans text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none bg-white">
-      <option value="UTC">UTC</option>
-      <option value="Europe/London">Europe/London</option>
-      <option value="Europe/Paris">Europe/Paris</option>
-      <option value="America/New_York">America/New_York</option>
-      <option value="Asia/Riyadh">Asia/Riyadh</option>
-      <option value="Asia/Dubai">Asia/Dubai</option>
-      <option value="Asia/Kuwait">Asia/Kuwait</option>
-      <option value="Africa/Cairo">Africa/Cairo</option>
-    </select>
-  </div>
-  <div class="flex flex-col gap-2">
-    <label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="clientTimeServer">Client NTP Server</label>
-    <input type="text" id="clientTimeServer" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-sm font-sans text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="pool.ntp.org">
   </div>
 </div>
 <button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-lg font-bold font-body-md text-body-md hover:bg-opacity-90 transition-all">Save Time Settings</button>
@@ -1201,8 +1182,6 @@ async function fetchTimeSettings() {
             const data = await res.json();
             document.getElementById('serverTimezone').value = data.server_timezone || 'UTC';
             document.getElementById('serverTimeServer').value = data.server_time_server || 'pool.ntp.org';
-            document.getElementById('clientTimezone').value = data.client_timezone || 'UTC';
-            document.getElementById('clientTimeServer').value = data.client_time_server || 'pool.ntp.org';
         }
     } catch (err) {
         console.error('Error fetching system settings:', err);
@@ -1214,8 +1193,6 @@ async function saveTimeSettings(e) {
     e.preventDefault();
     const server_timezone = document.getElementById('serverTimezone').value;
     const server_time_server = document.getElementById('serverTimeServer').value;
-    const client_timezone = document.getElementById('clientTimezone').value;
-    const client_time_server = document.getElementById('clientTimeServer').value;
     
     try {
         const res = await fetch('/api/admin/settings', {
@@ -1223,9 +1200,7 @@ async function saveTimeSettings(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 server_timezone,
-                server_time_server,
-                client_timezone,
-                client_time_server
+                server_time_server
             })
         });
         if (res.ok) {
