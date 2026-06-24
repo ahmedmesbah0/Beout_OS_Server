@@ -466,11 +466,26 @@ if ($latestPublishedAt) {
 <div class="flex justify-between items-center mb-4">
 <div>
 <h2 class="font-headline-md text-headline-md text-on-surface">Server Debug Logs</h2>
-<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time request logs, errors, and system events. File: <code class="text-primary"><?= htmlspecialchars(defined('DEBUG_LOG_FILE') ? constant('DEBUG_LOG_FILE') : dirname(__DIR__) . '/debug.log') ?></code></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time request logs, errors, command diagnostics, and full server debug state. File: <code class="text-primary"><?= htmlspecialchars(defined('DEBUG_LOG_FILE') ? constant('DEBUG_LOG_FILE') : dirname(__DIR__) . '/debug.log') ?></code></p>
 </div>
 <div class="flex gap-3">
+<button onclick="refreshFullDebugLog()" class="bg-secondary text-white hover:bg-opacity-90 px-4 py-2 rounded-lg font-bold font-body-sm text-body-sm transition-all">Full Debug</button>
 <button onclick="refreshDebugLog()" class="bg-primary text-white hover:bg-opacity-90 px-4 py-2 rounded-lg font-bold font-body-sm text-body-sm transition-all">Refresh</button>
 <button onclick="clearDebugLog()" class="bg-error bg-opacity-10 border border-error text-error hover:bg-error hover:text-white px-4 py-2 rounded-lg font-bold font-body-sm text-body-sm transition-all">Clear</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+<div class="bg-surface-container bg-opacity-40 border border-outline-variant rounded-lg p-md">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold mb-1">Log Lines</div>
+<select id="debugLineCount" class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-on-surface">
+<option value="200">200</option>
+<option value="1000">1000</option>
+<option value="5000">5000</option>
+</select>
+</div>
+<div class="bg-surface-container bg-opacity-40 border border-outline-variant rounded-lg p-md md:col-span-2">
+<div class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold mb-1">Debug Scope</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Use Full Debug to include PHP/server journals, disk, memory, network, process, and database path checks.</div>
 </div>
 </div>
 <div class="bg-slate-950 border border-outline-variant rounded-lg p-lg font-code-sm text-code-sm text-slate-200 overflow-x-auto max-h-[600px] overflow-y-auto whitespace-pre-wrap" id="debugLogContent">
@@ -1301,7 +1316,8 @@ let debugPollInterval = null;
 
 async function refreshDebugLog() {
     try {
-        const res = await fetch('/api/admin/debug/logs?lines=200');
+        const lines = document.getElementById('debugLineCount')?.value || '1000';
+        const res = await fetch('/api/admin/debug/logs?lines=' + encodeURIComponent(lines));
         if (res.ok) {
             const data = await res.json();
             const container = document.getElementById('debugLogContent');
@@ -1313,6 +1329,27 @@ async function refreshDebugLog() {
         }
     } catch(err) {
         document.getElementById('debugLogContent').innerHTML = '<span class="text-error">Failed to load debug logs: ' + err.message + '</span>';
+    }
+}
+
+async function refreshFullDebugLog() {
+    const container = document.getElementById('debugLogContent');
+    container.textContent = 'Loading full debug bundle...';
+    try {
+        const res = await fetch('/api/admin/debug/full');
+        if (res.ok) {
+            const data = await res.json();
+            const sections = [];
+            Object.keys(data).forEach(key => {
+                const value = Array.isArray(data[key]) ? data[key].join('\n') : String(data[key] || '');
+                sections.push('===== ' + key.toUpperCase() + ' =====\n' + value);
+            });
+            container.textContent = sections.join('\n\n');
+        } else {
+            container.textContent = 'Failed to load full debug bundle: HTTP ' + res.status;
+        }
+    } catch(err) {
+        container.textContent = 'Failed to load full debug bundle: ' + err.message;
     }
 }
 

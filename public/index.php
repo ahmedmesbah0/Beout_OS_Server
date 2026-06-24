@@ -54,7 +54,7 @@ function enforceAdminAuth() {
 
 // --- Debug log buffer ---
 define('DEBUG_LOG_FILE', dirname(__DIR__) . '/debug.log');
-define('MAX_DEBUG_LINES', 500);
+define('MAX_DEBUG_LINES', 5000);
 
 function debugLog($message, $level = 'INFO') {
     $ts = date('Y-m-d H:i:s');
@@ -69,10 +69,30 @@ function getDebugLogLines($lines = 100) {
 }
 function clearDebugLog() { @file_put_contents(DEBUG_LOG_FILE, ''); }
 
+function runDebugCommand($cmd) {
+    debugLog("CMD {$cmd}", 'DEBUG');
+    $output = [];
+    $code = 0;
+    @exec($cmd . ' 2>&1', $output, $code);
+    if ($code !== 0) {
+        debugLog("CMD_EXIT code={$code} cmd={$cmd}", 'WARN');
+    }
+    return implode("\n", array_slice($output, -1000));
+}
+
 // Request logging
 $requestStart = microtime(true);
 $clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 debugLog("REQ {$clientIp} {$_SERVER['REQUEST_METHOD']} {$_SERVER['REQUEST_URI']}");
+register_shutdown_function(function () use ($requestStart, $clientIp) {
+    $elapsedMs = (int)((microtime(true) - $requestStart) * 1000);
+    $status = http_response_code();
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        debugLog("FATAL {$error['message']} at {$error['file']}:{$error['line']}", 'ERROR');
+    }
+    debugLog("RESP {$clientIp} {$_SERVER['REQUEST_METHOD']} {$_SERVER['REQUEST_URI']} status={$status} elapsed_ms={$elapsedMs}");
+});
 
 try {
     $licenseMgr = new LicenseManager();
@@ -89,6 +109,7 @@ try {
         $activeRow = $stmt->fetch();
         $activeLicenses = $activeRow ? (int)$activeRow['count'] : 0;
 
+        debugLog("HEALTH ok version={$version} active_licenses={$activeLicenses}");
         sendJson([
             'status' => 'ok',
             'app' => 'Beout_OS Main PHP Server',
@@ -194,8 +215,10 @@ try {
         
         if ($email === $adminEmail && $passRow && password_verify($password, $passRow['value'])) {
             $_SESSION['admin_auth'] = true;
+            debugLog("ADMIN_LOGIN success email={$email} ip={$clientIp}", 'AUTH');
             sendJson(['status' => 'success']);
         } else {
+            debugLog("ADMIN_LOGIN failed email={$email} ip={$clientIp}", 'AUTH');
             sendJson(['error' => 'Invalid operator email or access key.'], 401);
         }
     }
@@ -414,6 +437,22 @@ try {
         enforceAdminAuth();
         $limit = isset($_GET['lines']) ? min((int)$_GET['lines'], MAX_DEBUG_LINES) : 100;
         sendJson(['logs' => getDebugLogLines($limit), 'file' => DEBUG_LOG_FILE]);
+    }
+    if ($requestUri === '/api/admin/debug/full') {
+        enforceAdminAuth();
+        debugLog("Full admin debug bundle requested by {$clientIp}", 'DEBUG');
+        sendJson([
+            'debug_log_file' => DEBUG_LOG_FILE,
+            'debug_logs' => getDebugLogLines(MAX_DEBUG_LINES),
+            'php_error_log' => runDebugCommand('tail -n 1000 ' . escapeshellarg(ini_get('error_log') ?: '/var/log/php_errors.log') . ' 2>/dev/null || true'),
+            'server_journal' => runDebugCommand('journalctl -u beout-server -n 500 --no-pager 2>/dev/null || true'),
+            'php_journal' => runDebugCommand('journalctl -u php*-fpm -n 500 --no-pager 2>/dev/null || true'),
+            'disk' => runDebugCommand('df -h 2>/dev/null'),
+            'memory' => runDebugCommand('free -h 2>/dev/null'),
+            'network' => runDebugCommand('ip -br addr show 2>/dev/null; ip route show table all 2>/dev/null'),
+            'processes' => runDebugCommand('ps aux --sort=-%mem | head -80 2>/dev/null'),
+            'database' => runDebugCommand('ls -lah ' . escapeshellarg(dirname(__DIR__)) . ' 2>/dev/null')
+        ]);
     }
     if ($requestUri === '/api/admin/debug/clear' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         enforceAdminAuth();
