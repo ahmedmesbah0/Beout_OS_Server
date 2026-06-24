@@ -26,3 +26,8 @@ storage/logs/*
 # IDE
 .idea/
 .vscode/
+
+# Local secrets and runtime assets
+certs/
+etc/
+server.db
