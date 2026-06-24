@@ -78,9 +78,9 @@ class UpdateManager {
         }
 
         // Save update metadata in SQLite
-        $stmt = $this->db->prepare("\
-        INSERT OR REPLACE INTO updates (version, filename, checksum, published_at) \
-        VALUES (:ver, :filename, :checksum, datetime('now')) \
+        $stmt = $this->db->prepare("
+            INSERT OR REPLACE INTO updates (version, filename, checksum, published_at)
+            VALUES (:ver, :filename, :checksum, datetime('now'))
         ");
         $stmt->execute([
             ':ver' => $version,
@@ -105,10 +105,10 @@ class UpdateManager {
         }
 
         // Set published_at to current time to make it the latest update
-        $stmt = $this->db->prepare("\
-        UPDATE updates \
-        SET published_at = datetime('now') \
-        WHERE version = :ver \
+        $stmt = $this->db->prepare("
+            UPDATE updates
+            SET published_at = datetime('now')
+            WHERE version = :ver
         ");
         $stmt->execute([':ver' => $version]);
         return true;
