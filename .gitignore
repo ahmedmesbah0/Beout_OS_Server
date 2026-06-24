@@ -1,16 +1,28 @@
-# SQLite Database
-*.db
-server.db
+# System files
+*.log
+*.pid
+*.tmp
 
-# Cryptographic Keys (Private keys must never be committed)
-keys/private_key.pem
-
-# Uploaded updates binary releases
-updates/
-
-# OS and IDE files
+# OS
 .DS_Store
-.vscode/
+Thumbs.db
+
+# Vendor / cache
+vendor/
+node_modules/
+bootstrap/cache/*
+
+# Environment
+.env
+.env.local
+
+# Deployment (generated on server)
+/etc/systemd/system/beout-server.service
+/etc/default/beout-server
+
+# Logs
+storage/logs/*
+
+# IDE
 .idea/
-*.swp
-*.swo
+.vscode/

@@ -4,11 +4,14 @@ After=network.target
 
 [Service]
 Type=simple
-User=mesba7
-WorkingDirectory=/home/mesba7/Documents/GitHub/Beout_OS/Beout_OS_Server
-ExecStart=/usr/bin/php -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:8080 -t public
+User=root
+Group=root
+WorkingDirectory=/root/Beout_OS_Server
+ExecStart=/usr/bin/php -d upload_max_filesize=100M -d post_max_size=100M -S 0.0.0.0:80 -t public
 Restart=always
-RestartSec=5
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
