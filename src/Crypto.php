@@ -29,9 +29,11 @@ class Crypto {
         return file_get_contents($pubPath);
     }
 
-    public static function signPayload($payload) {
+    public static function signPayload($payload, $privKeyPath = null) {
         try {
-            $privKeyPath = self::getPrivateKeyPath();
+            if ($privKeyPath === null) {
+                $privKeyPath = self::getPrivateKeyPath();
+            }
             if (!file_exists($privKeyPath)) {
                 return null;
             }

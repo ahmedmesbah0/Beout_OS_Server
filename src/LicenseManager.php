@@ -60,31 +60,16 @@ class LicenseManager {
             throw new Exception("License key already active on another machine", 403);
         }
 
-        // Cryptographically sign the machine_id using Ed25519 with SHA-512 digest (matching client's expected format)
+        // Cryptographically sign the machine_id using Ed25519 (extracting seed from PEM and signing via Libsodium)
         $keyPath = dirname(__DIR__) . '/etc/ed25519_private_key.pem';
         if (!file_exists($keyPath)) {
             throw new Exception("Ed25519 private key not found at " . $keyPath . " - Please run /bin/generate_keys.sh to create keys", 500);
         }
 
-        // Load private key
-        $privateKey = openssl_pkey_get_private('file://' . $keyPath);
-        if (!$privateKey) {
-            throw new Exception("Failed to load Ed25519 private key from " . $keyPath, 500);
-        }
-
-        // Generate the signature using OpenSSL with SHA-512 digest (matching client's EVP_DigestSign behavior)
-        // This matches the client's crypto_utils.cpp implementation which uses EVP_sha512()
-        $signature = "";
-        if (!openssl_sign($machineId, $signature, $privateKey, OPENSSL_ALGO_ED25519)) {
-            openssl_free_key($privateKey);
-            throw new Exception("Failed to generate Ed25519 signature with SHA-512 digest", 500);
-        }
-        openssl_free_key($privateKey);
-
-        // Base64 encode the signature (matching client's expected format)
-        $activationToken = base64_encode($signature);
+        // Generate the signature using Libsodium
+        $activationToken = Crypto::signPayload($machineId, $keyPath);
         if (!$activationToken) {
-            throw new Exception("Failed to base64 encode signature", 500);
+            throw new Exception("Failed to generate Ed25519 signature using Libsodium", 500);
         }
 
         // Update database status
