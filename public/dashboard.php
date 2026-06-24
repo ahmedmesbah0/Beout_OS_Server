@@ -172,6 +172,10 @@ if ($latestPublishedAt) {
 <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
 <span>Audit Logs</span>
 </button>
+<button id="nav-debug" onclick="switchTab('debug'); startDebugPoll()" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer">
+<svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+<span>Debug Logs</span>
+</button>
 <button id="nav-settings" onclick="switchTab('settings')" class="nav-btn text-on-surface-variant px-4 py-3 flex items-center gap-3 rounded-lg hover:bg-surface-variant hover:text-on-surface transition-all w-full font-body-md text-body-md cursor-pointer mt-auto">
 <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
 <span>Settings</span>
@@ -452,6 +456,25 @@ if ($latestPublishedAt) {
 </div>
 <div class="bg-surface-container bg-opacity-40 rounded-lg p-lg font-code-sm text-code-sm text-on-surface overflow-x-auto max-h-[500px]" id="auditLogContent">
 <!-- Dynamic log lines -->
+</div>
+</div>
+
+<!-- ============================================== -->
+<!-- TAB: DEBUG LOGS                                 -->
+<!-- ============================================== -->
+<div id="view-debug" class="tab-view hidden bg-surface rounded-xl border border-outline-variant shadow-sm flex flex-col p-lg">
+<div class="flex justify-between items-center mb-4">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Server Debug Logs</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time request logs, errors, and system events. File: <code class="text-primary"><?= htmlspecialchars(defined('DEBUG_LOG_FILE') ? constant('DEBUG_LOG_FILE') : dirname(__DIR__) . '/debug.log') ?></code></p>
+</div>
+<div class="flex gap-3">
+<button onclick="refreshDebugLog()" class="bg-primary text-white hover:bg-opacity-90 px-4 py-2 rounded-lg font-bold font-body-sm text-body-sm transition-all">Refresh</button>
+<button onclick="clearDebugLog()" class="bg-error bg-opacity-10 border border-error text-error hover:bg-error hover:text-white px-4 py-2 rounded-lg font-bold font-body-sm text-body-sm transition-all">Clear</button>
+</div>
+</div>
+<div class="bg-slate-950 border border-outline-variant rounded-lg p-lg font-code-sm text-code-sm text-slate-200 overflow-x-auto max-h-[600px] overflow-y-auto whitespace-pre-wrap" id="debugLogContent">
+<div class="text-slate-500">Loading debug logs...</div>
 </div>
 </div>
 
@@ -1273,12 +1296,55 @@ async function handleLogout() {
     } catch(e) {}
 }
 
+// --- Debug Log Functions ---
+let debugPollInterval = null;
+
+async function refreshDebugLog() {
+    try {
+        const res = await fetch('/api/admin/debug/logs?lines=200');
+        if (res.ok) {
+            const data = await res.json();
+            const container = document.getElementById('debugLogContent');
+            if (data.logs && data.logs.length > 0) {
+                container.textContent = data.logs.join('\n');
+            } else {
+                container.innerHTML = '<span class="text-slate-500">No log entries yet. Requests will appear here in real-time.</span>';
+            }
+        }
+    } catch(err) {
+        document.getElementById('debugLogContent').innerHTML = '<span class="text-error">Failed to load debug logs: ' + err.message + '</span>';
+    }
+}
+
+async function clearDebugLog() {
+    if (!confirm('Clear all debug log entries?')) return;
+    try {
+        const res = await fetch('/api/admin/debug/clear', { method: 'POST' });
+        if (res.ok) {
+            refreshDebugLog();
+        }
+    } catch(err) {}
+}
+
+function startDebugPoll() {
+    refreshDebugLog();
+    if (debugPollInterval) clearInterval(debugPollInterval);
+    debugPollInterval = setInterval(refreshDebugLog, 5000);
+}
+
+function stopDebugPoll() {
+    if (debugPollInterval) {
+        clearInterval(debugPollInterval);
+        debugPollInterval = null;
+    }
+}
+
 // Auto telemetry pooling
 function initPoll() {
     fetchLicenses();
     fetchUpdates();
     fetchTimeSettings();
-    
+
     // Refresh VMs and events every 10 seconds
     setInterval(() => {
         fetchLicenses();

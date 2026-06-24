@@ -409,7 +409,20 @@ try {
         }
     }
 
-    // 14. Render UI
+    // 14. Admin API: Debug Logs (view + clear)
+    if ($requestUri === '/api/admin/debug/logs') {
+        enforceAdminAuth();
+        $limit = isset($_GET['lines']) ? min((int)$_GET['lines'], MAX_DEBUG_LINES) : 100;
+        sendJson(['logs' => getDebugLogLines($limit), 'file' => DEBUG_LOG_FILE]);
+    }
+    if ($requestUri === '/api/admin/debug/clear' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        enforceAdminAuth();
+        clearDebugLog();
+        debugLog("Debug log cleared by admin");
+        sendJson(['status' => 'success']);
+    }
+
+    // 15. Render UI
     if ($requestUri === '/admin' || $requestUri === '/') {
         if (!isset($_SESSION['admin_auth']) || $_SESSION['admin_auth'] !== true) {
             include dirname(__DIR__) . '/public/login.php';
