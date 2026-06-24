@@ -4,6 +4,12 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Determine if sudo is required and available
+SUDO=""
+if [ "$EUID" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
+    SUDO="sudo"
+fi
+
 # Ensure certificates are available
 echo "Verifying SSL certificates..."
 if [[ ! -f "certs/server.crt" ]] || [[ ! -f "certs/server.key" ]]; then
@@ -22,11 +28,11 @@ fi
 
 # Verify key links exist
 if [[ ! -f "/etc/ed25519_private_key.pem" ]]; then
-    sudo ln -sf "$SCRIPT_DIR/etc/ed25519_private_key.pem" /etc/ed25519_private_key.pem
+    $SUDO ln -sf "$SCRIPT_DIR/etc/ed25519_private_key.pem" /etc/ed25519_private_key.pem
 fi
 
 if [[ ! -f "/etc/ed25519_public_key.pem" ]]; then
-    sudo ln -sf "$SCRIPT_DIR/etc/ed25519_public_key.pem" /etc/ed25519_public_key.pem
+    $SUDO ln -sf "$SCRIPT_DIR/etc/ed25519_public_key.pem" /etc/ed25519_public_key.pem
 fi
 
 # Kill any existing server processes
