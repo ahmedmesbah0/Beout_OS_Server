@@ -29,7 +29,11 @@ $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Helper to send JSON responses
 function sendJson($data, $statusCode = 200) {
-    http_response_code($statusCode);
+    $code = (int)$statusCode;
+    if ($code < 100 || $code > 599) {
+        $code = 400; // Default to 400 Bad Request for custom exception codes
+    }
+    http_response_code($code);
     header('Content-Type: application/json');
     echo json_encode($data);
     exit;
