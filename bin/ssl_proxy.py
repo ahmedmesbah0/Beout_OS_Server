@@ -15,7 +15,57 @@ def handle_client(client_socket, target_host, target_port):
         client_socket.close()
         return
 
-    # Bidirectional forwarding
+    # Forward client→server with X-Forwarded header injection on first packet
+    def forward_client_to_server(src, dst):
+        try:
+            first = True
+            while True:
+                data = src.recv(8192)
+                if not data:
+                    break
+                if first:
+                    # Inject X-Forwarded headers so the PHP backend knows the
+                    # original connection was HTTPS on port 8443.
+                    header_block = (
+                        "X-Forwarded-Proto: https\r\n"
+                        "X-Forwarded-Port: 8443\r\n"
+                    )
+                    # Insert after the first line (request line) or after Host header
+                    if b"\r\nHost: " in data:
+                        # Find end of Host header line
+                        host_end = data.find(b"\r\n", data.find(b"\r\nHost: ") + 2)
+                        if host_end == -1:
+                            host_end = data.find(b"\r\n\r\n")
+                        if host_end != -1:
+                            data = data[:host_end + 2] + header_block.encode() + data[host_end + 2:]
+                    else:
+                        # Fallback: insert after request line
+                        req_line_end = data.find(b"\r\n")
+                        if req_line_end != -1:
+                            data = data[:req_line_end + 2] + header_block.encode() + data[req_line_end + 2:]
+                    first = False
+                dst.sendall(data)
+        except Exception:
+            pass
+        finally:
+            try:
+                src.shutdown(socket.SHUT_RDWR)
+            except Exception:
+                pass
+            try:
+                dst.shutdown(socket.SHUT_RDWR)
+            except Exception:
+                pass
+            try:
+                src.close()
+            except Exception:
+                pass
+            try:
+                dst.close()
+            except Exception:
+                pass
+
+    # Forward server→client (no modification needed)
     def forward(src, dst):
         try:
             while True:
@@ -43,7 +93,7 @@ def handle_client(client_socket, target_host, target_port):
             except Exception:
                 pass
 
-    threading.Thread(target=forward, args=(client_socket, server_socket), daemon=True).start()
+    threading.Thread(target=forward_client_to_server, args=(client_socket, server_socket), daemon=True).start()
     threading.Thread(target=forward, args=(server_socket, client_socket), daemon=True).start()
 
 def main():

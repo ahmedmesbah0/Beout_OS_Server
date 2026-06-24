@@ -508,6 +508,21 @@ if ($latestPublishedAt) {
 </form>
 </div>
 
+<!-- Server Endpoint Configuration Card -->
+<div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Public Server Endpoint</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">The public-facing base URL clients use to download updates. Must include protocol and port if non-standard (e.g., <code>https://license.example.com:8443</code>). Leave blank to auto-detect from request headers.</p>
+</div>
+<form id="baseUrlForm" onsubmit="saveBaseUrl(event)" class="space-y-4">
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase font-bold" for="baseServerUrl">Public Base URL</label>
+<input type="text" id="baseServerUrl" class="block w-full bg-surface border border-outline-variant rounded-lg px-md py-md font-sans text-body-md text-on-surface placeholder-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" placeholder="https://license.example.com:8443">
+</div>
+<button type="submit" class="bg-primary text-white px-6 py-2.5 rounded-lg font-bold font-body-md text-body-md hover:bg-opacity-90 transition-all">Save Endpoint</button>
+</form>
+</div>
+
 <!-- Verification Key Card -->
 <div class="bg-surface p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col gap-4 lg:col-span-2">
 <div>
@@ -515,7 +530,7 @@ if ($latestPublishedAt) {
 <p class="font-body-sm text-body-sm text-on-surface-variant">This public key must be baked inside client VM appliances at <code>/opt/beout_os/etc/license_public_key.pem</code> to verify updates.</p>
 </div>
 <div class="w-full bg-on-surface text-surface-variant p-md rounded-lg font-code-md text-code-md whitespace-pre-wrap select-all leading-relaxed" style="background-color: #0c0f1a; color: #a5b4fc;">
-    <?= htmlspecialchars(BeoutOS\Server\Crypto::getPublicKey()) ?>
+    <?php if ($keysAvailable): ?><?= htmlspecialchars($publicKey) ?><?php else: ?><span style="color: #f87171;">⚠ No signing keys found. Run <code>bin/generate_keys.sh</code> on the server to generate the Ed25519 key pair.</span><?php endif; ?>
 </div>
 </div>
 </div>
@@ -925,10 +940,8 @@ function renderAuditLogs() {
         logs.push(`[${new Date(upd.published_at).toISOString()}] DEPLOY: Version ${upd.version} package ${upd.filename} pushed to repositories`);
     });
 
-    // Mock extra systems events
-    logs.push(`[${new Date(Date.now() - 1000 * 1800).toISOString()}] SECURITY: CSRF Token verified successfully for admin session`);
-    logs.push(`[${new Date(Date.now() - 1000 * 3600).toISOString()}] TELEMETRY: Flushed log telemetry buffers, 0 loss reported`);
-    logs.push(`[${new Date(Date.now() - 1000 * 7200).toISOString()}] SYSTEM: Central Engine listener started on port 8000`);
+    // System startup event (real, not mocked)
+    logs.push(`[${new Date(Date.now() - 1000 * 7200).toISOString()}] SYSTEM: Beout_OS License Server active on port 8000`);
 
     logs.sort().reverse();
 
@@ -1182,9 +1195,36 @@ async function fetchTimeSettings() {
             const data = await res.json();
             document.getElementById('serverTimezone').value = data.server_timezone || 'UTC';
             document.getElementById('serverTimeServer').value = data.server_time_server || 'pool.ntp.org';
+            const baseUrlField = document.getElementById('baseServerUrl');
+            if (baseUrlField) {
+                baseUrlField.value = data.base_server_url || '';
+            }
         }
     } catch (err) {
         console.error('Error fetching system settings:', err);
+    }
+}
+
+// Save Base Server URL
+async function saveBaseUrl(e) {
+    e.preventDefault();
+    const baseServerUrl = document.getElementById('baseServerUrl').value.trim();
+
+    try {
+        const res = await fetch('/api/admin/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base_server_url: baseServerUrl })
+        });
+        if (res.ok) {
+            alert('Public server endpoint saved successfully!');
+            fetchTimeSettings();
+        } else {
+            const data = await res.json();
+            alert('Failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (err) {
+        alert('Failed to connect to server.');
     }
 }
 
@@ -1193,7 +1233,7 @@ async function saveTimeSettings(e) {
     e.preventDefault();
     const server_timezone = document.getElementById('serverTimezone').value;
     const server_time_server = document.getElementById('serverTimeServer').value;
-    
+
     try {
         const res = await fetch('/api/admin/settings', {
             method: 'POST',

@@ -140,12 +140,56 @@ class UpdateManager {
     }
 
     /**
+     * Determine the public-facing base URL of this server for download links.
+     *
+     * Priority:
+     *  1. Admin-configured base_server_url setting
+     *  2. X-Forwarded-Proto / X-Forwarded-Port headers (set by reverse proxies)
+     *  3. HTTP_HOST + HTTPS detection → fall back to guessing
+     *
+     * @return string e.g. "https://license.example.com:8443" (no trailing slash)
+     */
+    public function getPublicBaseUrl() {
+        // 1. Admin-configured explicit base URL
+        $stmt = $this->db->prepare("SELECT value FROM settings WHERE key = 'base_server_url'");
+        $stmt->execute();
+        $row = $stmt->fetch();
+        if ($row && !empty($row['value'])) {
+            return rtrim($row['value'], '/');
+        }
+
+        // 2. Reverse-proxy headers (X-Forwarded-Proto, X-Forwarded-Port)
+        $scheme = 'http';
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            $scheme = $_SERVER['HTTP_X_FORWARDED_PROTO'];
+        } elseif (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            $scheme = 'https';
+        }
+
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        $port = '';
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PORT'])) {
+            $fwdPort = (int)$_SERVER['HTTP_X_FORWARDED_PORT'];
+            // Only append port if it's non-standard
+            if (($scheme === 'https' && $fwdPort !== 443) || ($scheme === 'http' && $fwdPort !== 80)) {
+                $port = ':' . $fwdPort;
+            }
+        }
+
+        return "{$scheme}://{$host}{$port}";
+    }
+
+    /**
      * Get the latest update metadata in JSON format for client consumption
      * This endpoint is called by client's check_updates.sh script
+     *
+     * Returns null if no updates are available (caller should return 404).
+     *
      * Expected response:
      * {
      *   "version": "1.2.0",
-     *   "url": "https://update.beout.ai/updates/beout_os-core_1.2.0.deb",
+     *   "url": "https://license.example.com:8443/updates/beout_os-core_1.2.0.deb",
      *   "checksum": "sha256:abc123..."
      * }
      */
@@ -153,15 +197,11 @@ class UpdateManager {
         $latest = $this->getLatestUpdate();
 
         if (!$latest) {
-            return ['version' => '', 'url' => '', 'checksum' => ''];
+            return null;
         }
 
-        // Get the base URL for the server
-        $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'update.beout.ai';
-
-        // Construct the update URL
-        $updateUrl = "{$scheme}://{$host}/updates/{$latest['filename']}";
+        $baseUrl = $this->getPublicBaseUrl();
+        $updateUrl = "{$baseUrl}/updates/{$latest['filename']}";
 
         return [
             'version' => $latest['version'],

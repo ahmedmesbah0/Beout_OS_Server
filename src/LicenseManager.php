@@ -60,10 +60,11 @@ class LicenseManager {
             throw new Exception("License key already active on another machine", 403);
         }
 
-        // Cryptographically sign the machine_id using Ed25519 (extracting seed from PEM and signing via Libsodium)
-        $keyPath = dirname(__DIR__) . '/etc/ed25519_private_key.pem';
+        // Cryptographically sign the machine_id using Ed25519 (via Libsodium)
+        // Uses the unified key path from Crypto class (keys/ directory)
+        $keyPath = Crypto::getPrivateKeyPath();
         if (!file_exists($keyPath)) {
-            throw new Exception("Ed25519 private key not found at " . $keyPath . " - Please run /bin/generate_keys.sh to create keys", 500);
+            throw new Exception("Ed25519 private key not found at " . $keyPath . " - Please run bin/generate_keys.sh to create keys", 500);
         }
 
         // Generate the signature using Libsodium
@@ -100,10 +101,15 @@ class LicenseManager {
             return ['status' => 'INACTIVE', 'error' => 'Machine ID mismatch'];
         }
 
+        // Reject heartbeats from non-active licenses (REVOKED, etc.)
+        if ($row['status'] !== 'ACTIVE') {
+            return ['status' => $row['status'], 'error' => 'License is not active'];
+        }
+
         // Update check-in details
         $updateStmt = $this->db->prepare("
-            UPDATE licenses 
-            SET machine_ip = :ip, os_version = :ver, last_seen = datetime('now') 
+            UPDATE licenses
+            SET machine_ip = :ip, os_version = :ver, last_seen = datetime('now')
             WHERE license_key = :key
         ");
         $updateStmt->execute([
@@ -118,18 +124,21 @@ class LicenseManager {
     }
 
     public function revokeLicense($licenseKey) {
-        $stmt = $this->db->prepare("UPDATE licenses SET status = 'REVOKED' WHERE license_key = :key");
-        return $stmt->execute([':key' => $licenseKey]);
+        $stmt = $this->db->prepare("UPDATE licenses SET status = 'REVOKED' WHERE license_key = :key AND status != 'REVOKED'");
+        $stmt->execute([':key' => $licenseKey]);
+        return $stmt->rowCount() > 0;
     }
 
     public function reactivateLicense($licenseKey) {
-        $stmt = $this->db->prepare("UPDATE licenses SET status = 'ACTIVE' WHERE license_key = :key");
-        return $stmt->execute([':key' => $licenseKey]);
+        $stmt = $this->db->prepare("UPDATE licenses SET status = 'ACTIVE' WHERE license_key = :key AND status = 'REVOKED'");
+        $stmt->execute([':key' => $licenseKey]);
+        return $stmt->rowCount() > 0;
     }
 
     public function deleteLicense($licenseKey) {
         $stmt = $this->db->prepare("DELETE FROM licenses WHERE license_key = :key");
-        return $stmt->execute([':key' => $licenseKey]);
+        $stmt->execute([':key' => $licenseKey]);
+        return $stmt->rowCount() > 0;
     }
 
     private function generateRandomKey() {

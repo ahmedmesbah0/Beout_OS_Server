@@ -52,37 +52,75 @@ function enforceAdminAuth() {
     }
 }
 
+// --- Debug log buffer ---
+define('DEBUG_LOG_FILE', dirname(__DIR__) . '/debug.log');
+define('MAX_DEBUG_LINES', 500);
+
+function debugLog($message, $level = 'INFO') {
+    $ts = date('Y-m-d H:i:s');
+    $line = "[{$ts}] {$level}: {$message}\n";
+    @file_put_contents(DEBUG_LOG_FILE, $line, FILE_APPEND | LOCK_EX);
+}
+function getDebugLogLines($lines = 100) {
+    if (!file_exists(DEBUG_LOG_FILE)) return [];
+    $all = @file(DEBUG_LOG_FILE, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (!$all) return [];
+    return array_slice($all, -min($lines, count($all)));
+}
+function clearDebugLog() { @file_put_contents(DEBUG_LOG_FILE, ''); }
+
+// Request logging
+$requestStart = microtime(true);
+$clientIp = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+debugLog("REQ {$clientIp} {$_SERVER['REQUEST_METHOD']} {$_SERVER['REQUEST_URI']}");
+
 try {
     $licenseMgr = new LicenseManager();
     $updateMgr = new UpdateManager();
 
     // 1. Health check route
     if ($requestUri === '/api/health') {
-        sendJson(['status' => 'ok', 'app' => 'Beout_OS Main PHP Server']);
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->query("SELECT value FROM settings WHERE key = 'server_version'");
+        $versionRow = $stmt->fetch();
+        $version = $versionRow ? $versionRow['value'] : '1.0.0';
+
+        $stmt = $db->query("SELECT COUNT(*) as count FROM licenses WHERE status = 'ACTIVE'");
+        $activeRow = $stmt->fetch();
+        $activeLicenses = $activeRow ? (int)$activeRow['count'] : 0;
+
+        sendJson([
+            'status' => 'ok',
+            'app' => 'Beout_OS Main PHP Server',
+            'version' => $version,
+            'server_time' => date('c'),
+            'active_licenses' => $activeLicenses
+        ]);
     }
 
     // 2. GET Latest Update Metadata (for VM clients)
     if ($requestUri === '/api/updates/latest') {
-        $latest = $updateMgr->getLatestUpdate();
-        if (!$latest) {
+        $result = $updateMgr->getLatestUpdateJSON();
+        if (!$result) {
             sendJson(['error' => 'No updates available'], 404);
         }
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-        $host = $_SERVER['HTTP_HOST'];
-        $downloadUrl = "{$protocol}://{$host}/updates/" . urlencode($latest['filename']);
-        sendJson([
-            'version' => $latest['version'],
-            'url' => $downloadUrl,
-            'checksum' => $latest['checksum']
-        ]);
+        sendJson($result);
     }
 
-    // 3. Download release package binary
+    // 3. Download release package binary (admin download path)
     if (preg_match('#^/api/updates/download/([^/]+)$#', $requestUri, $matches)) {
         $filename = urldecode($matches[1]);
+        // Path traversal protection
+        if (strpos($filename, '..') !== false) {
+            sendJson(['error' => 'Invalid filename'], 400);
+        }
         $filePath = dirname(__DIR__) . '/public/updates/' . $filename;
-        if (!file_exists($filePath) || strpos($filename, '..') !== false) {
+        if (!file_exists($filePath) || !is_file($filePath)) {
             sendJson(['error' => 'File not found'], 404);
+        }
+        $fileSize = filesize($filePath);
+        if ($fileSize === false) {
+            sendJson(['error' => 'Cannot determine file size'], 500);
         }
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
@@ -90,8 +128,10 @@ try {
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
-        header('Content-Length: ' . filesize($filePath));
-        readfile($filePath);
+        header('Content-Length: ' . $fileSize);
+        if (readfile($filePath) === false) {
+            error_log("BeoutOS: Failed to serve file: {$filePath}");
+        }
         exit;
     }
 
@@ -145,7 +185,7 @@ try {
         $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_email'");
         $stmt->execute();
         $emailRow = $stmt->fetch();
-        $adminEmail = $emailRow ? $emailRow['value'] : 'operator@beout.ai';
+        $adminEmail = $emailRow ? $emailRow['value'] : 'admin@beout.local';
         
         // Fetch password hash
         $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_password_hash'");
@@ -208,7 +248,8 @@ try {
         }
         
         $response = [
-            'admin_email' => $settings['admin_email'] ?? 'operator@beout.ai',
+            'admin_email' => $settings['admin_email'] ?? 'admin@beout.local',
+            'base_server_url' => $settings['base_server_url'] ?? '',
             'server_timezone' => $settings['server_timezone'] ?? 'UTC',
             'server_time_server' => $settings['server_time_server'] ?? 'pool.ntp.org',
             'client_timezone' => $settings['client_timezone'] ?? 'UTC',
@@ -225,6 +266,7 @@ try {
         $db = Database::getInstance()->getConnection();
         
         $allowedKeys = [
+            'base_server_url',
             'server_timezone',
             'server_time_server',
             'client_timezone',
@@ -378,9 +420,18 @@ try {
         $stmt = $db->prepare("SELECT value FROM settings WHERE key = 'admin_email'");
         $stmt->execute();
         $emailRow = $stmt->fetch();
-        $adminEmail = $emailRow ? $emailRow['value'] : 'operator@beout.ai';
-        
-        $publicKey = Crypto::getPublicKey();
+        $adminEmail = $emailRow ? $emailRow['value'] : 'admin@beout.local';
+
+        $publicKey = '';
+        $keysAvailable = false;
+        try {
+            if (Crypto::isKeyPairAvailable()) {
+                $publicKey = Crypto::getPublicKey();
+                $keysAvailable = true;
+            }
+        } catch (\Exception $e) {
+            // Keys not available — dashboard will show warning
+        }
         include dirname(__DIR__) . '/public/dashboard.php';
         exit;
     }
@@ -388,6 +439,7 @@ try {
     // Default 404
     sendJson(['error' => 'Route not found'], 404);
 
-} catch (\Exception $e) {
-    sendJson(['error' => $e->getMessage()], 500);
+} catch (\Throwable $e) {
+    error_log("BeoutOS Server Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+    sendJson(['error' => 'Internal server error', 'debug' => $e->getMessage()], 500);
 }
