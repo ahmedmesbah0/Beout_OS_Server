@@ -73,10 +73,10 @@ class LicenseManager {
         }
 
         // Update database status
-        $updateStmt = $this->db->prepare("\
-        UPDATE licenses \
-        SET status = 'ACTIVE', machine_id = :mid, activated_at = datetime('now'), last_seen = datetime('now') \
-        WHERE license_key = :key \
+        $updateStmt = $this->db->prepare("
+            UPDATE licenses 
+            SET status = 'ACTIVE', machine_id = :mid, activated_at = datetime('now'), last_seen = datetime('now') 
+            WHERE license_key = :key
         ");
         $updateStmt->execute([
             ':mid' => $machineId,
@@ -101,10 +101,10 @@ class LicenseManager {
         }
 
         // Update check-in details
-        $updateStmt = $this->db->prepare("\
-        UPDATE licenses \
-        SET machine_ip = :ip, os_version = :ver, last_seen = datetime('now') \
-        WHERE license_key = :key \
+        $updateStmt = $this->db->prepare("
+            UPDATE licenses 
+            SET machine_ip = :ip, os_version = :ver, last_seen = datetime('now') 
+            WHERE license_key = :key
         ");
         $updateStmt->execute([
             ':ip' => $machineIp,
